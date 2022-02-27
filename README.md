@@ -7,7 +7,7 @@ SFU Engineering Science Capstone Project - 2022
 * Read and parse files
 
 #### Feature Detection and Matching (FDM)
-* Featuren dectection using SIFT
+* Feature dectection using SIFT
 * Feature Matching using Lucas-Kanade
 
 #### Point Cloud Generation (PCG)
