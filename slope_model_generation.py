@@ -10,12 +10,13 @@
 # Algorithm:
 #   1. Read in ply file
 #   2. Calculate grid
-#   3. Calculate slopes within grid
+#   3. Calculate slope within grid
 #   4. Output graphical interpretation of the slopes on the green
 #
 ###################################################################################################
-from pathlib import Path
 import numpy as np
+import copy
+from pathlib import Path
 
 ###################################################################################################
 #
@@ -87,16 +88,12 @@ def read_ply_file(ply_file):
             else:
                 # Store vertex data to memory
                 if i < num_verticies:
-                    x, y, z, r, g, b, a, q = line.split()
+                    x, y, z, _, _, _, _, _ = line.split()
 
                     s_data.x[i] = x
                     s_data.y[i] = y
                     s_data.z[i] = z
-                    # s_data.red[i] = r
-                    # s_data.green[i] = g
-                    # s_data.blue[i] = b
-                    # s_data.alpha[i] = a
-                    # s_data.quality[i] = q
+
                     i+=1
                 # Store face data to memory
                 else:
@@ -106,30 +103,91 @@ def read_ply_file(ply_file):
 
                     j+=1
 
-    print('Finished reading file')
+    print('Finished reading file\n')
     return s_data
 
 
-def calculate_slope(indicies, s_data):
+def calculate_slope(indicies, s_data, grid_location):
     #######################################
     #
     # Calculates the slope of the given indicies from the most top left corner point
     #
-    # Input: list of indicies (ints), the vertex data object
+    # Input: list of indicies (ints), the vertex data object, grid area top left corner
     # Returns: Vector sum (tuple as (x, y, z))
     #
     ######################################
 
-    # 1. Find upper left point of the indicies indicated within the vertex data object
-    # 2. Calculate the vectors between that point and all other indicies points
-    # 3. Average the vectors
-    # 4. Recursively call this function removing the top left point
-    # 5. Sum the recursive call (4) and the averaged vector sum from (3)
-    pass
+    # Determine location of grid area
+    x_min = grid_location[0]
+    y_min = grid_location[1]
+    x_max = grid_location[2]
+    y_max = grid_location[3]
+
+    # Preallocate memory
+    xs = np.zeros(len(indicies))
+    ys = np.zeros(len(indicies))
+    zs = np.zeros(len(indicies))
+
+    # Store the data points of interest
+    counter = 0
+    for index in indicies:
+        xs[counter] = s_data.x[index]
+        ys[counter] = s_data.y[index]
+        zs[counter] = s_data.z[index]
+        counter+=1
+
+    # Fit a 2D plane to the data
+    tmp_A = []
+    tmp_b = []
+    for i in range(len(indicies)):
+        tmp_A.append([xs[i], ys[i], 1])
+        tmp_b.append(zs[i])
+    b = np.matrix(tmp_b).T
+    A = np.matrix(tmp_A)
+    try:
+        fit = (A.T * A).I * A.T * b
+    except Exception as e:
+        # TODO: sometimes there are multiples of the same point in the code,
+        # for now, return a null gradient - Preferably ply file creation would check for no double
+        # points
+        print("Cannot compute a gradient in a grid section due to multiples of the same point")
+
+        return (0, 0, 0)
+
+    # print("Solution:")
+    # print("%f x + %f y + %f = z" % (fit[0], fit[1], fit[2]))
+
+    # Find x, y pt of maximum height within this grid area (will be on a corner)
+    left_bottom  = [x_min, y_min, float(np.squeeze(np.array(x_min * fit[0] + y_min * fit[1] + fit[2])))]
+    left_top     = [x_min, y_max, float(np.squeeze(np.array(x_min * fit[0] + y_max * fit[1] + fit[2])))]
+    right_bottom = [x_max, y_min, float(np.squeeze(np.array(x_max * fit[0] + y_min * fit[1] + fit[2])))]
+    right_top    = [x_max, y_max, float(np.squeeze(np.array(x_max * fit[0] + y_max * fit[1] + fit[2])))]
+
+    # Determine the gradient from the relative z heights of the 4 corners on the plane
+    if abs(left_top[2] - right_bottom[2]) > abs(left_bottom[2] - right_top[2]):
+        gradient = np.subtract(left_top, right_bottom)
+    elif abs(left_bottom[2] - right_top[2]) > abs(left_top[2] - right_bottom[2]):
+        gradient = np.subtract(left_bottom, right_top)
+    elif left_top[2] - right_top[2] == 0:
+        gradient = np.subtract(left_top, left_bottom)
+    elif left_top[2] - left_bottom[2] == 0:
+        gradient = np.subtract(left_top, right_top)
+
+    # Ensure the gradient points down the slope
+    if gradient[2] > 0:
+        return -1*gradient
+    else:
+        return gradient
 
 
 # Insertion point
 if __name__ == '__main__':
+    # Display output
+    print()
+    print('#'*75 + '\n')
+    print('Starting slope generation module...\n')
+    print('#'*75 + '\n')
+
     # Test the modules functions from this insertion point
     data_location = Path('Data/2022-02-26_GrassPatch01/Hole01/Images')
 
@@ -139,7 +197,10 @@ if __name__ == '__main__':
 
     # Allocate grid vector memory
     lst = np.zeros(grid_size_x)
-    grid_vector = [list(zip(lst, lst, lst))] * grid_size_y
+    intermediate_step = list(zip(lst, lst, lst))
+    grid_vector = []
+    for i in range(grid_size_y):
+        grid_vector.append(copy.deepcopy(intermediate_step)) 
     
     # Read in data
     data = read_ply_file(ply_file)
@@ -169,14 +230,12 @@ if __name__ == '__main__':
             # Find all points within this grid area
             indicies = list(filter(lambda k: data.x[k] >= x_start and data.x[k] <= x_finish and data.y[k] >= y_start and data.y[k] <= y_finish, range(len(data.x))))
 
-            if len(indicies) == 0:
-                # No points found in this grid area, continue
+            if len(indicies) <= 1:
+                # No gradient can be given for a grid area that contains less than two points
                 continue
-            elif len(indicies) == 1:
-                # No slope can be given for a grid area that contains one point
-                continue
-            elif len(indicies) >= 2:
+            else:
                 # Find a vector that averages the slopes of the grid area points
-                grid_vector[i][j] = calculate_slope(indicies, data)
+                grid_vector[i][j] = calculate_slope(indicies, data, (x_start, y_start, x_finish, y_finish))
+                pass
 
     print('Done')
