@@ -15,8 +15,21 @@
 #
 ###################################################################################################
 import numpy as np
+import matplotlib.pyplot as plt
+import math
 import copy
 from pathlib import Path
+
+###################################################################################################
+#
+#                                            CONSTANTS
+#
+###################################################################################################
+X = 0
+Y = 1
+Z = 2
+GRID_SIZE_X = 20
+GRID_SIZE_Y = 20
 
 ###################################################################################################
 #
@@ -107,7 +120,7 @@ def read_ply_file(ply_file):
     return s_data
 
 
-def calculate_slope(indicies, s_data, grid_location):
+def calculate_gradient(indicies, s_data, grid_location):
     #######################################
     #
     # Calculates the slope of the given indicies from the most top left corner point
@@ -180,6 +193,85 @@ def calculate_slope(indicies, s_data, grid_location):
         return gradient
 
 
+def determine_slope_color(xx, yy, zz):
+    #######################################
+    #
+    # Determines the colour of a slope vector for the plot
+    #
+    # Input: 2D array of with each element defining the gradient of a section of the green
+    # Returns: Color array for the quiver plot
+    #
+    ######################################
+
+    # Colour
+    g = "green"
+    y = "goldenrod" 
+    o = "darkorange"
+    r = "red"
+
+    slope = 0
+    denom = math.sqrt(xx**2 + yy**2)
+    if denom > 0:
+        slope = abs(math.atan( zz / math.sqrt(xx**2 + yy**2) ))
+
+    # Determine color from slope
+    color = r
+    if slope < 1.5:
+        color = g
+    elif slope < 2.5:
+        color = y 
+    elif slope < 3.5:
+        color = o 
+
+    return color
+
+
+def plot_green(green_gradients):
+    #######################################
+    #
+    # Plots the green slopes in a quiver plot
+    #
+    # Input: 2D array of with each element defining the gradient of a section of the green
+    # Returns: None
+    # Output: Quiver Plot
+    #
+    ######################################
+
+    # Define grid points
+    xPoints = np.linspace(0, GRID_SIZE_X, GRID_SIZE_Y, False)
+    yPoints = np.linspace(0, GRID_SIZE_X, GRID_SIZE_Y, False)
+    xx = []
+    yy = []
+    zz = []
+    cc = []
+
+    # Map gradients to X and Y slopes
+    for i in range(GRID_SIZE_X):
+        xRow = []
+        yRow = []
+        zRow = []
+        for j in range(GRID_SIZE_Y):
+            xRow.append(green_gradients[i][j][X])
+            yRow.append(green_gradients[i][j][Y])
+            zRow.append(green_gradients[i][j][Z])
+            cc.append(determine_slope_color(green_gradients[i][j][X], 
+                                            green_gradients[i][j][Y], 
+                                            green_gradients[i][j][Z]))
+
+        xx.append(xRow)
+        yy.append(yRow)
+        zz.append(zRow)
+
+    # plot
+    fig, ax = plt.subplots()
+
+    ax.contour(xPoints, yPoints, zz, colors="lightgrey")
+    ax.quiver(xPoints, yPoints, xx, yy, scale=4, scale_units="inches", color=cc)
+
+    plt.show()
+
+    return
+
 # Insertion point
 if __name__ == '__main__':
     # Display output
@@ -192,20 +284,18 @@ if __name__ == '__main__':
     data_location = Path('Data/2022-02-26_GrassPatch01/Hole01/Images')
 
     ply_file = data_location / 'mesh1.1.ply'
-    grid_size_x = 20
-    grid_size_y = 20
 
     # Allocate grid vector memory
-    lst = np.zeros(grid_size_x)
+    lst = np.zeros(GRID_SIZE_X)
     intermediate_step = list(zip(lst, lst, lst))
     grid_vector = []
-    for i in range(grid_size_y):
+    for i in range(GRID_SIZE_Y):
         grid_vector.append(copy.deepcopy(intermediate_step)) 
     
     # Read in data
     data = read_ply_file(ply_file)
 
-    # Now that the data is collected, create a 20x20 grid from min & max x and y points
+    # Now that the data is collected, create a GRID_SIZE_X x GRID_SIZE_Y grid from min & max x and y points
     max_x = max(data.x)
     min_x = min(data.x)
     max_y = max(data.y)
@@ -213,14 +303,14 @@ if __name__ == '__main__':
 
     # Determine grid boxes dimensions
     length_x = max_x - min_x
-    step_x = length_x/grid_size_x
+    step_x = length_x/GRID_SIZE_X
 
     length_y = max_y - min_y
-    step_y = length_y/grid_size_y
+    step_y = length_y/GRID_SIZE_Y
 
     # Go through each grid area and find average slope
-    for i in range(grid_size_x):
-        for j in range(grid_size_y):
+    for i in range(GRID_SIZE_X):
+        for j in range(GRID_SIZE_Y):
             # Determine grid area x and y selections
             x_start  = min_x + step_x*i
             x_finish = min_x + step_x*(i+1)
@@ -235,7 +325,9 @@ if __name__ == '__main__':
                 continue
             else:
                 # Find a vector that averages the slopes of the grid area points
-                grid_vector[i][j] = calculate_slope(indicies, data, (x_start, y_start, x_finish, y_finish))
+                grid_vector[i][j] = calculate_gradient(indicies, data, (x_start, y_start, x_finish, y_finish))
                 pass
+
+    plot_green(grid_vector)
 
     print('Done')

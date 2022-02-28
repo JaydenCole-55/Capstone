@@ -19,3 +19,7 @@ SFU Engineering Science Capstone Project - 2022
 * Generation Graphical Slope Model
 
 
+
+## Requirements
+* Python 3.10.2
+
