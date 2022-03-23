@@ -14,10 +14,12 @@
 #   4. Output graphical interpretation of the slopes on the green
 #
 ###################################################################################################
-import numpy as np
-import matplotlib.pyplot as plt
 import math
 import copy
+import argparse
+import numpy as np
+import matplotlib.pyplot as plt
+from tqdm import tqdm
 from pathlib import Path
 
 ###################################################################################################
@@ -42,24 +44,12 @@ class Surface_Data(object):
     # Surface data storage object
     #
     ################################
-    def __init__(self, num_verticies, num_faces):
+    def __init__(self, num_verticies):
 
         # Allocate memory for vertex data
         self.x       = np.zeros(num_verticies)
         self.y       = np.zeros(num_verticies)
         self.z       = np.zeros(num_verticies)
-        self.red     = np.zeros(num_verticies)
-        self.green   = np.zeros(num_verticies)
-        self.blue    = np.zeros(num_verticies)
-        self.alpha   = np.zeros(num_verticies)
-        self.quality = np.zeros(num_verticies)
-
-        # Allocate memory for faces data
-        lst1 = np.zeros(num_faces)
-        lst2 = np.zeros(num_faces)
-        lst3 = np.zeros(num_faces)
-        
-        self.faces = list(zip(lst1, lst2, lst3))
 
 
 ###################################################################################################
@@ -79,8 +69,7 @@ def read_ply_file(ply_file):
     in_file_header = True
 
     i = 0
-    j = 0
-    num_faces = 0
+    properties = []
 
     with open(ply_file) as plyFile:
         # Iterate through each line of the file storing the data
@@ -90,32 +79,25 @@ def read_ply_file(ply_file):
             if in_file_header:
                 if 'end_header' in line:
                     in_file_header = False
-                    s_data = Surface_Data(num_verticies, num_faces)
+                    s_data = Surface_Data(num_verticies)
 
                 elif 'element' in line and 'vertex' in line:
                     num_verticies = int(line.split()[2])
 
-                elif 'element' in line and 'face' in line:
-                    num_faces = int(line.split()[2])
+                elif 'property' in line:
+                    # Determine ply property ordering
+                    property_name = line.split()[2]
+                    properties.append(property_name)
 
                 continue
             else:
-                # Store vertex data to memory
+                # Parse file body for x, y, and z data values
                 if i < num_verticies:
-                    x, y, z, _, _, _, _, _, _, _ = line.split()
-
-                    s_data.x[i] = x
-                    s_data.y[i] = y
-                    s_data.z[i] = z
+                    s_data.x[i] = line.split()[properties.index("x")]
+                    s_data.y[i] = line.split()[properties.index("y")]
+                    s_data.z[i] = line.split()[properties.index("z")]
 
                     i+=1
-                # Store face data to memory
-                else:
-                    _, v1, v2, v3 = line.split()
-
-                    s_data.faces[j] = (int(v1), int(v2), int(v3))
-
-                    j+=1
 
     print('Finished reading file\n')
     return s_data
@@ -281,10 +263,14 @@ if __name__ == '__main__':
     print('Starting slope generation module...\n')
     print('#'*75 + '\n')
 
-    # Test the modules functions from this insertion point
-    data_location = Path('Data/2022-02-26_GrassPatch01/Hole01/Images')
+    # Read in arguments
+    parser = argparse.ArgumentParser(description='Find slopes from a ply file')
+    parser.add_argument('ply_file', metavar='f', type=str, help='Path to ply file')
 
-    ply_file = '/Users/rstolys/Developer/Capstone/map/depthmaps/merged.ply' #data_location / 'mesh1.1.ply'
+    args = parser.parse_args()
+
+    # Test the modules functions from this insertion point
+    ply_file = Path(args.ply_file)
 
     # Allocate grid vector memory
     lst = np.zeros(GRID_SIZE_X)
@@ -310,7 +296,7 @@ if __name__ == '__main__':
     step_y = length_y/GRID_SIZE_Y
 
     # Go through each grid area and find average slope
-    for i in range(GRID_SIZE_X):
+    for i in tqdm(range(GRID_SIZE_X), desc="Calculating slopes"):
         for j in range(GRID_SIZE_Y):
             # Determine grid area x and y selections
             x_start  = min_x + step_x*i
@@ -329,6 +315,7 @@ if __name__ == '__main__':
                 grid_vector[i][j] = calculate_gradient(indicies, data, (x_start, y_start, x_finish, y_finish))
                 pass
 
+    print("\nPlotting Green")
     plot_green(grid_vector)
 
     print('Done')
