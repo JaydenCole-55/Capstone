@@ -80,6 +80,7 @@ def read_ply_file(ply_file):
 
     i = 0
     j = 0
+    num_faces = 0
 
     with open(ply_file) as plyFile:
         # Iterate through each line of the file storing the data
@@ -101,7 +102,7 @@ def read_ply_file(ply_file):
             else:
                 # Store vertex data to memory
                 if i < num_verticies:
-                    x, y, z, _, _, _, _, _ = line.split()
+                    x, y, z, _, _, _, _, _, _, _ = line.split()
 
                     s_data.x[i] = x
                     s_data.y[i] = y
@@ -283,7 +284,7 @@ if __name__ == '__main__':
     # Test the modules functions from this insertion point
     data_location = Path('Data/2022-02-26_GrassPatch01/Hole01/Images')
 
-    ply_file = data_location / 'mesh1.1.ply'
+    ply_file = '/Users/rstolys/Developer/Capstone/map/depthmaps/merged.ply' #data_location / 'mesh1.1.ply'
 
     # Allocate grid vector memory
     lst = np.zeros(GRID_SIZE_X)
