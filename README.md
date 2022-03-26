@@ -43,6 +43,6 @@ SFU Engineering Science Capstone Project - 2022
     * Run Command: `docker exec -it PFS_1 bin/opensfm_run_all images`
     * This can be adapted to only run one command at a time
 * Copy results from docker to host machine
-    * Run Command: `docker cp _containerId:/source/openSfM/data/green/undistored ./map`
+    * Run Command: `docker cp _containerId:/source/openSfM/data/green/undistorted ./map`
     * Can be more specific with with files we want to copy back. Only care about .ply file
 

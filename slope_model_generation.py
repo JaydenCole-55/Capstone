@@ -3,7 +3,7 @@
 #                                  SLOPE MODEL GENERATION MODULE
 #
 #
-# Generates a 2D slope map from a polygon mesh
+# Generates a 2D slope map from a set of verticies in a ply file
 # Authors: Jayden Cole & Ryan Stolys
 # Creation date: 2022-02-26
 #
@@ -143,15 +143,12 @@ def calculate_gradient(indicies, s_data, grid_location):
     try:
         fit = (A.T * A).I * A.T * b
     except Exception as e:
-        # TODO: sometimes there are multiples of the same point in the code,
+        # TODO: sometimes there are multiples of the same point in the ply file,
         # for now, return a null gradient - Preferably ply file creation would check for no double
         # points
         print("Cannot compute a gradient in a grid section due to multiples of the same point")
 
         return (0, 0, 0)
-
-    # print("Solution:")
-    # print("%f x + %f y + %f = z" % (fit[0], fit[1], fit[2]))
 
     # Find x, y pt of maximum height within this grid area (will be on a corner)
     left_bottom  = [x_min, y_min, float(np.squeeze(np.array(x_min * fit[0] + y_min * fit[1] + fit[2])))]
@@ -245,7 +242,7 @@ def plot_green(green_gradients):
         yy.append(yRow)
         zz.append(zRow)
 
-    # plot
+    # Plot
     fig, ax = plt.subplots()
 
     ax.contour(xPoints, yPoints, zz, colors="lightgrey")
@@ -265,7 +262,7 @@ if __name__ == '__main__':
 
     # Read in arguments
     parser = argparse.ArgumentParser(description='Find slopes from a ply file')
-    parser.add_argument('ply_file', metavar='f', type=str, help='Path to ply file')
+    parser.add_argument('ply_file', metavar='file', type=str, default=Path('processData', '2022-02-26_GrassPatch01', 'Hole01', 'merged.ply'), help='Path to ply file')
 
     args = parser.parse_args()
 
@@ -296,8 +293,8 @@ if __name__ == '__main__':
     step_y = length_y/GRID_SIZE_Y
 
     # Go through each grid area and find average slope
-    for i in tqdm(range(GRID_SIZE_X), desc="Calculating slopes"):
-        for j in range(GRID_SIZE_Y):
+    for i in tqdm(range(GRID_SIZE_X), desc="Left to Right slope Calculations"):
+        for j in tqdm(range(GRID_SIZE_Y), desc="Front to Back Calculations", leave=False):
             # Determine grid area x and y selections
             x_start  = min_x + step_x*i
             x_finish = min_x + step_x*(i+1)
