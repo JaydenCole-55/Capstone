@@ -252,23 +252,7 @@ def plot_green(green_gradients):
 
     return
 
-# Insertion point
-if __name__ == '__main__':
-    # Display output
-    print()
-    print('#'*75 + '\n')
-    print('Starting slope generation module...\n')
-    print('#'*75 + '\n')
-
-    # Read in arguments
-    parser = argparse.ArgumentParser(description='Find slopes from a ply file')
-    parser.add_argument('ply_file', metavar='file', type=str, default=Path('processData', '2022-02-26_GrassPatch01', 'Hole01', 'merged.ply'), help='Path to ply file')
-
-    args = parser.parse_args()
-
-    # Test the modules functions from this insertion point
-    ply_file = Path(args.ply_file)
-
+def orchestration(ply_file):
     # Allocate grid vector memory
     lst = np.zeros(GRID_SIZE_X)
     intermediate_step = list(zip(lst, lst, lst))
@@ -316,3 +300,21 @@ if __name__ == '__main__':
     plot_green(grid_vector)
 
     print('Done')
+
+# Insertion point
+if __name__ == '__main__':
+    # Display output
+    print()
+    print('#'*75 + '\n')
+    print('Starting slope generation module...\n')
+    print('#'*75 + '\n')
+
+    # Read in arguments
+    parser = argparse.ArgumentParser(description='Find slopes from a ply file')
+    parser.add_argument('ply_file', metavar='file', type=str, default=Path('DataTest', 'GrassPatch01', 'Output', 'merged.ply'), help='Path to ply file')
+
+    args = parser.parse_args()
+
+    orchestration(args.ply_file)
+
+    

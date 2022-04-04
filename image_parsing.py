@@ -19,6 +19,8 @@
 #   5. Create exif_overrides file in images folder
 #
 ###################################################################################################
+import argparse
+from pathlib import Path
 import os
 import shutil
 import sys
@@ -31,6 +33,7 @@ from datetime import datetime
 #
 ###################################################################################################
 IMAGE_DIR = "imageData/"
+NESTED_IMAGE_DIR = "images/"
 GPS_OVERRIDE_FILE = "exif_overrides.json"
 CONFIG_YAML = "config.yaml"
 
@@ -55,29 +58,21 @@ WRITE_FILE = "w"
 #                                            FUNCTIONS
 #
 ###################################################################################################
-def read_inputs():
-    # Check the number of arguments is correct
-    if len(sys.argv) < 3:
-        print("Not enough arugments provided. Expecting: image_parsing.py <image_folder_path> <gps_data_file_path>")
-        exit()
-
-
-    # Check the inputs are valid
-    image_folder_path = sys.argv[1]
-    gps_data_file_path = sys.argv[2]
-
-    if not os.path.isdir(image_folder_path):
-        print("The image folder path is not a valid directory. Value provided: '" + image_folder_path + "'")
+def validate_args(images_folder, gps_data_file):
+    # Validate images folder
+    if not os.path.isdir(images_folder):
+        print("The image folder path is not a valid directory. Value provided: '" + images_folder + "'")
         exit()
     
+    # Validate gps_data file exists
     try:
-        file = open(gps_data_file_path, READ_FILE)
+        file = open(gps_data_file, READ_FILE)
         file.close()
     except IOError as err:
-        print("The gps_data file either does not exist or could not be read. Value provided: '" + gps_data_file_path + "'")
+        print("The gps_data file either does not exist or could not be read. Value provided: '" + gps_data_file + "'")
         exit()
 
-    return [sys.argv[1], sys.argv[2]]
+    return
 
 
 def transfer_images(image_folder_path):
@@ -87,6 +82,7 @@ def transfer_images(image_folder_path):
 
     # Make Directory for images
     os.mkdir(IMAGE_DIR)
+    os.mkdir(IMAGE_DIR + NESTED_IMAGE_DIR)
 
     # Move files from image directory
     for file_name in os.listdir(image_folder_path):
@@ -100,7 +96,7 @@ def add_config_file():
     config_file = open(IMAGE_DIR + CONFIG_YAML, 'w')
 
     # Add File Header Comment
-    config_file.write("###################################################################################################\n")
+    config_file.write('#'*99+'\n')
     config_file.write("#\n")
     config_file.write("#                                         CONFIG.YAML\n")
     config_file.write("#\n")
@@ -109,7 +105,7 @@ def add_config_file():
     config_file.write("# Authors: Highfly Technologies\n")
     config_file.write("# Creation Date: " + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "\n")
     config_file.write("#\n")
-    config_file.write("###################################################################################################\n")
+    config_file.write('#'*99+'\n')
 
     config_file.write("feature_min_frames: " + str(MATCHING_GPS_NEIGHBOURS) + "\n")
     config_file.write("processes: " + str(PROCESSES) + "\n")
@@ -204,13 +200,26 @@ class GPS_IMAGE:
 
 # Insertion point
 if __name__ == '__main__':
-    [image_folder_path, gps_data_file_path] = read_inputs()
+    # Indicate beginning of module
+    print()
+    print('#'*75 + '\n')
+    print('Starting image parsing module...\n')
+    print('#'*75 + '\n')
 
-    transfer_images(image_folder_path)
+    parser = argparse.ArgumentParser(description='Image Parsing Module')
+    parser.add_argument('images_folder', metavar='folder', type=str, default=Path('DataTest', 'GrassPatch01', 'Images'), help='Path to images')
+    parser.add_argument('output_folder', metavar='folder', type=str, default=Path('DataTest', 'GrassPatch01', 'Output'), help='Path to output data')
+
+    args = parser.parse_args()
+
+    # Begin Image Parsing Module
+    validate_args(args.images_folder, args.gps_data_file)
+
+    transfer_images(args.images_folder)
 
     add_config_file()
 
-    gps_data_points = read_gps_data(gps_data_file_path)
+    gps_data_points = read_gps_data(args.gps_data_file)
 
     gps_image_matches = match_gps_to_images(gps_data_points)
 

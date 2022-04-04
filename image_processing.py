@@ -18,6 +18,18 @@
 import os
 import subprocess
 from pathlib import Path
+import argparse
+
+###################################################################################################
+#
+#                                            CONSTANTS
+#
+###################################################################################################
+IMAGE_NAME = 'puttfromthesky'
+CONTAINER_NAME = 'PFS_1'
+PROCESSING_FOLDER = 'green'
+PLY_FILE = PROCESSING_FOLDER + "/undistorted/depthmaps/merged.ply"
+DOCKER_FILE_PATH = './OpenSfM/'
 
 
 ###################################################################################################
@@ -26,45 +38,38 @@ from pathlib import Path
 #
 ###################################################################################################
 def process_images(host_images_folder, host_destination_folder):
-    image_name = 'puttfromthesky'
-    container_name = 'PFS_1'
-    processing_folder = 'green'
-    ply_file = processing_folder + "/undistorted/depthmaps/merged.ply"
-
-    DOCKER_FILE_PATH = './OpenSfM/'
-
     # Ensure output directory exists
     os.makedirs(host_destination_folder, exist_ok=True)
 
     #   1. Create Docker Image (if not already built)
     print("Building Docker image")
-    subprocess.check_output(['docker', 'build', '-t', image_name, DOCKER_FILE_PATH])
+    subprocess.check_output(['docker', 'build', '-t', IMAGE_NAME, DOCKER_FILE_PATH])
 
     #   2. Create and Start Docker Container
     print("Starting container")
-    subprocess.check_output(['docker', 'run', '-it', '-d', '--name', container_name, image_name + ':latest'])
+    subprocess.check_output(['docker', 'run', '-it', '-d', '--name', CONTAINER_NAME, IMAGE_NAME + ':latest'])
 
     # Find container ID from container name
-    output = str(subprocess.check_output(['docker', 'container', 'ls', '-a', '-f', "name="+container_name]))
+    output = str(subprocess.check_output(['docker', 'container', 'ls', '-a', '-f', "name=" + CONTAINER_NAME]))
 
     containers_list = output.split(sep='\\n')
 
     for container in containers_list:
-        if container_name in container:
+        if CONTAINER_NAME in container:
             container_ID = container.split()[0]
 
     #   3. Copy image data to Docker Image
     print('Copying images to container')
-    output = subprocess.check_output(['docker', 'exec', container_name, 'mkdir', 'data/' + processing_folder])
-    output = subprocess.check_output(['docker', 'cp', host_images_folder, container_ID + ':/source/OpenSfM/data/' + processing_folder])
+    output = subprocess.check_output(['docker', 'exec', CONTAINER_NAME, 'mkdir', 'data/' + PROCESSING_FOLDER])
+    output = subprocess.check_output(['docker', 'cp', host_images_folder, container_ID + ':/source/OpenSfM/data/' + PROCESSING_FOLDER])
 
     #   4. Run the image processing pipeline in the Docker Image
     print('Running processing pipeline')
-    subprocess.check_output(['docker', 'exec', '-it',  container_name, 'sh', '-c', 'bin/opensfm_run_all data/' + processing_folder, ';', 'mkdir', 'done' ])
+    subprocess.check_output(['docker', 'exec', '-it',  CONTAINER_NAME, 'sh', '-c', 'bin/opensfm_run_all data/' + PROCESSING_FOLDER, ';', 'mkdir', 'done' ])
 
     #   5. Copy results from Docker to host machine
     print('Collecting output from processing pipeline')
-    output = subprocess.check_output(['docker', 'cp', container_ID + ':/source/OpenSfM/data/' + ply_file, host_destination_folder])
+    output = subprocess.check_output(['docker', 'cp', container_ID + ':/source/OpenSfM/data/' + PLY_FILE, host_destination_folder])
 
     #   6. Delete container from docker
     output = subprocess.check_output(['docker', 'container', 'stop', container_ID])
@@ -76,8 +81,17 @@ def process_images(host_images_folder, host_destination_folder):
 
 # Insertion point
 if __name__ == '__main__':
-    # Run an example processing pipeline
-    input_images_path = Path("./Data/2022-02-26_GrassPatch01/Hole01/images")
-    output_data_path  = Path("./processedData/2022-02-26_GrassPatch01/Hole01/")
+    # Indicate beginning of module
+    print()
+    print('#'*75 + '\n')
+    print('Starting image processing module...\n')
+    print('#'*75 + '\n')
 
-    process_images(input_images_path, output_data_path)
+    # Run an example processing pipeline
+    parser = argparse.ArgumentParser(description='Image Processing Module')
+    parser.add_argument('images_folder', metavar='folder', type=str, default=Path('DataTest', 'GrassPatch01', 'Images'), help='Path to images')
+    parser.add_argument('output_folder', metavar='file', type=str, default=Path('DataTest', 'GrassPatch01', 'Output'), help='Path to gps_data file')
+
+    args = parser.parse_args()
+
+    process_images(args.images_folder, args.output_folder)
