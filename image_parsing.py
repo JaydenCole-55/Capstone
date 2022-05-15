@@ -19,12 +19,12 @@
 #   5. Create exif_overrides file in images folder
 #
 ###################################################################################################
-import argparse
-from pathlib import Path
 import os
-import shutil
-import sys
 import json
+import argparse
+import shutil
+
+from pathlib import Path
 from datetime import datetime
 
 ###################################################################################################
@@ -32,8 +32,8 @@ from datetime import datetime
 #                                            CONSTANTS
 #
 ###################################################################################################
-IMAGE_DIR = "imageData/"
-NESTED_IMAGE_DIR = "images/"
+DATA_DIR = "imageData/"
+IMAGE_DIR = "imageData/images/"
 GPS_OVERRIDE_FILE = "exif_overrides.json"
 CONFIG_YAML = "config.yaml"
 
@@ -44,6 +44,7 @@ GPS_POINT_NUM_I = 0
 GPS_LAT_I = 8
 GPS_LON_I = 9
 GPS_ALT_I = 10
+IMG_NAME_I = 11
 DEFAULT_GPS_DOP = 5.0
 
 IMAGE_FILE_EXT = ".jpg"
@@ -51,6 +52,39 @@ IMAGE_DNE = "DNE"
 
 READ_FILE = "r"
 WRITE_FILE = "w"
+
+###################################################################################################
+#
+#                                            CLASSES
+#
+###################################################################################################
+class GPS_IMAGE:
+    def __init__ (self, image_name, gps_point_num, gps_lat, gps_long, gps_alt, gps_dop):
+        self.image_name = image_name
+        self.gps_point_num = gps_point_num
+        self.gps_lat = gps_lat
+        self.gps_long = gps_long
+        self.gps_alt = gps_alt
+        self.gps_dop = gps_dop
+
+    def check_for_image(self, image_list):
+        index = -1
+        try:
+            index = image_list.index(str(self.image_name) + IMAGE_FILE_EXT)
+            self.image_name = image_list[index]
+        except ValueError as err:
+            print("Could not find image: " + self.image_name + IMAGE_FILE_EXT)
+            self.image_name = IMAGE_DNE
+
+        return
+
+    def format_gps_data(self):
+        return {
+            'latitude': self.gps_lat,
+            'longitude': self.gps_long,
+            'altitude': self.gps_alt,
+            'dop': self.gps_dop
+        }
 
 
 ###################################################################################################
@@ -76,13 +110,13 @@ def validate_args(images_folder, gps_data_file):
 
 
 def transfer_images(image_folder_path):
-    # Remove existsing directory if it exists
-    if os.path.isdir(IMAGE_DIR):
-        shutil.rmtree(IMAGE_DIR)
+    # Remove existing directory if it exists
+    if os.path.isdir(DATA_DIR):
+        shutil.rmtree(DATA_DIR)
 
     # Make Directory for images
+    os.mkdir(DATA_DIR)
     os.mkdir(IMAGE_DIR)
-    os.mkdir(IMAGE_DIR + NESTED_IMAGE_DIR)
 
     # Move files from image directory
     for file_name in os.listdir(image_folder_path):
@@ -93,7 +127,7 @@ def transfer_images(image_folder_path):
 
 
 def add_config_file():
-    config_file = open(IMAGE_DIR + CONFIG_YAML, 'w')
+    config_file = open(DATA_DIR + CONFIG_YAML, 'w')
 
     # Add File Header Comment
     config_file.write('#'*99+'\n')
@@ -124,25 +158,26 @@ def read_gps_data(gps_file_path):
     expected_gps_point = 0
     gps_data_points = []
 
-    # File Values: gps_point_num X X X X X X X Lon Lat Alt X
+    # File Values: gps_point_num X X X X X X X Lon Lat Alt X image_name
     for line in file_lines:
-        values = line.split("\t")
+        if "\t" in line:
+            values = line.strip('\n').split("\t")
+        elif "," in line:
+            values = line.strip('\n').split(",")
 
         # Check if line has valid data
         if values[GPS_POINT_NUM_I] == str(expected_gps_point): 
-            gps_image = GPS_IMAGE(expected_gps_point, expected_gps_point, values[GPS_LAT_I], values[GPS_LON_I], values[GPS_ALT_I], DEFAULT_GPS_DOP)
+            gps_image = GPS_IMAGE(values[IMG_NAME_I], expected_gps_point, values[GPS_LAT_I], values[GPS_LON_I], values[GPS_ALT_I], DEFAULT_GPS_DOP)
             gps_data_points.append(gps_image)
             expected_gps_point += 1
-
-    
 
     return gps_data_points
 
 
 def match_gps_to_images(gps_data_points):
     # Get image list
-    files_anyCase = os.listdir(IMAGE_DIR)
-    files = list(map(lambda x: x.lower(), files_anyCase))
+    image_files = os.listdir(IMAGE_DIR)
+    files = list(map(lambda x: x.lower(), image_files))
     
     # Search image list for each image and update image_name
     for gps_point in gps_data_points:
@@ -160,67 +195,48 @@ def create_gps_overrides(gps_image_matches): # gps_image_matches: [GPS_IMAGE]
             exif_overrides[gps_image_match.image_name] = gps_image_match.format_gps_data()
 
     # Write JSON object to file
-    with open(IMAGE_DIR + GPS_OVERRIDE_FILE, WRITE_FILE) as outfile:
+    with open(DATA_DIR + GPS_OVERRIDE_FILE, WRITE_FILE) as outfile:
         json.dump(exif_overrides, outfile)
 
     return 0
 
-###################################################################################################
-#
-#                                            CLASSES
-#
-###################################################################################################
-class GPS_IMAGE:
-    def __init__ (self, image_name, gps_point_num, gps_lat, gps_long, gps_alt, gps_dop):
-        self.image_name = image_name
-        self.gps_point_num = gps_point_num
-        self.gps_lat = gps_lat
-        self.gps_long = gps_long
-        self.gps_alt = gps_alt
-        self.gps_dop = gps_dop
 
-    def check_for_image(self, image_list):
-        index = -1
-        try:
-            index = image_list.index(str(self.gps_point_num) + IMAGE_FILE_EXT)
-            self.image_name = image_list[index]
-        except ValueError as err:
-            self.image_name = IMAGE_DNE 
-        
-        return
-        
-    def format_gps_data(self):
-        return {
-            'latitude': self.gps_lat,
-            'longitude': self.gps_long,
-            'altitude': self.gps_alt,
-            'dop': self.gps_dop
-        }
+def image_parsing(images_folder, gps_data_file):
 
-
-# Insertion point
-if __name__ == '__main__':
     # Indicate beginning of module
     print()
     print('#'*75 + '\n')
     print('Starting image parsing module...\n')
     print('#'*75 + '\n')
 
+    # Run the image parsing module
+    print("Validating arguments")
+    validate_args(images_folder,gps_data_file)
+
+    print("Transferring images")
+    transfer_images(images_folder)
+
+    print("Adding config file")
+    add_config_file()
+
+    print("Reading gps data")
+    gps_data_points = read_gps_data(gps_data_file)
+
+    print("Matching gps data to images")
+    gps_image_matches = match_gps_to_images(gps_data_points)
+
+    # Store gps and image data in a json
+    print("Saving matches")
+    create_gps_overrides(gps_image_matches)
+
+
+# Insertion point
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Image Parsing Module')
     parser.add_argument('images_folder', metavar='folder', type=str, default=Path('DataTest', 'GrassPatch01', 'Images'), help='Path to images')
-    parser.add_argument('output_folder', metavar='folder', type=str, default=Path('DataTest', 'GrassPatch01', 'Output'), help='Path to output data')
+    parser.add_argument('gps_data_file', metavar='file', type=str, default=Path('gps_data_example.txt'), help='GPS data for Images')
 
     args = parser.parse_args()
 
-    # Begin Image Parsing Module
-    validate_args(args.images_folder, args.gps_data_file)
-
-    transfer_images(args.images_folder)
-
-    add_config_file()
-
-    gps_data_points = read_gps_data(args.gps_data_file)
-
-    gps_image_matches = match_gps_to_images(gps_data_points)
-
-    create_gps_overrides(gps_image_matches)
+    # Run Image Parsing Module
+    image_parsing(args.images_folder, args.gps_data_file)

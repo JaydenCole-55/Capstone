@@ -38,12 +38,18 @@ DOCKER_FILE_PATH = './OpenSfM/'
 #
 ###################################################################################################
 def process_images(host_images_folder, host_destination_folder):
+    # Indicate beginning of module
+    print()
+    print('#'*75 + '\n')
+    print('Starting image processing module...\n')
+    print('#'*75 + '\n')
+
     # Ensure output directory exists
     os.makedirs(host_destination_folder, exist_ok=True)
 
     #   1. Create Docker Image (if not already built)
     print("Building Docker image")
-    subprocess.check_output(['docker', 'build', '-t', IMAGE_NAME, DOCKER_FILE_PATH])
+    #subprocess.check_output(['docker', 'build', '-t', IMAGE_NAME, DOCKER_FILE_PATH])
 
     #   2. Create and Start Docker Container
     print("Starting container")
@@ -64,7 +70,7 @@ def process_images(host_images_folder, host_destination_folder):
     output = subprocess.check_output(['docker', 'cp', host_images_folder, container_ID + ':/source/OpenSfM/data/' + PROCESSING_FOLDER])
 
     #   4. Run the image processing pipeline in the Docker Image
-    print('Running processing pipeline')
+    print('Running processing pipeline... this can take 30-40 minutes')
     subprocess.check_output(['docker', 'exec', '-it',  CONTAINER_NAME, 'sh', '-c', 'bin/opensfm_run_all data/' + PROCESSING_FOLDER, ';', 'mkdir', 'done' ])
 
     #   5. Copy results from Docker to host machine
@@ -81,16 +87,10 @@ def process_images(host_images_folder, host_destination_folder):
 
 # Insertion point
 if __name__ == '__main__':
-    # Indicate beginning of module
-    print()
-    print('#'*75 + '\n')
-    print('Starting image processing module...\n')
-    print('#'*75 + '\n')
-
     # Run an example processing pipeline
     parser = argparse.ArgumentParser(description='Image Processing Module')
-    parser.add_argument('images_folder', metavar='folder', type=str, default=Path('DataTest', 'GrassPatch01', 'Images'), help='Path to images')
-    parser.add_argument('output_folder', metavar='file', type=str, default=Path('DataTest', 'GrassPatch01', 'Output'), help='Path to gps_data file')
+    parser.add_argument('images_folder', metavar='folder', type=str, default=Path('DataTest', 'PICS for GPS-20220412T022518Z-001', 'input', 'images'), help='Path to images')
+    parser.add_argument('output_folder', metavar='file', type=str, default=Path('DataTest', 'PICS for GPS-20220412T022518Z-001', 'output'), help='Path to gps_data file')
 
     args = parser.parse_args()
 

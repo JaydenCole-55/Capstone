@@ -14,11 +14,14 @@
 #
 ###################################################################################################
 import argparse
-from pathlib import Path
 import os
+from pathlib import Path
 
-PLY_FILE = "/merged.ply" # Needs to be fixed relative to output folder
+from image_parsing import image_parsing
+from image_processing import process_images
+from slope_model_generation import orchestration
 
+PLY_FILE = "merged.ply"
 
 def run_pipeline(input_folder, gps_file, output_folder):
     ########################################
@@ -28,22 +31,20 @@ def run_pipeline(input_folder, gps_file, output_folder):
     ########################################
     
     # 1. Run the image and GPS combination data
-    os.system("image_parsing.py " + input_folder + " " + gps_file)
+    image_parsing(input_folder, gps_file)
 
     # 2. Run the image processing
-    os.system("image_processing.py " + input_folder + " " + output_folder)
+    process_images(input_folder, output_folder)
 
     # 3. Run the slope model generation script
-    os.system("slope_model_generation.py " + output_folder + "/merged.ply")
-
-    pass
+    orchestration(Path(output_folder, PLY_FILE))
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run the full image processing pipeline')
-    parser.add_argument('images_folder', metavar='folder', type=str, default=Path('DataTest', 'GrassPatch01', 'Images'), help='Path to images')
-    parser.add_argument('gps_data', metavar='file', type=str, default=Path('DataTest', 'GrassPatch01', 'gps_data.txt'), help='Path to gps_data file')
-    parser.add_argument('output_folder', metavar='folder', type=str, default=Path('DataTest', 'GrassPatch01', 'Output'), help='Path to output data')
+    parser.add_argument('images_folder', metavar='folder', type=str, default=Path('DataTest', 'PICS for GPS-20220412T022518Z-001', 'input', 'images'      ), help='Path to images')
+    parser.add_argument('gps_data',      metavar='file',   type=str, default=Path('DataTest', 'PICS for GPS-20220412T022518Z-001', 'input', 'GPS_data.txt'), help='Path to gps_data file')
+    parser.add_argument('output_folder', metavar='folder', type=str, default=Path('DataTest', 'PICS for GPS-20220412T022518Z-001', 'output'               ), help='Path to output file')
 
     args = parser.parse_args()
 

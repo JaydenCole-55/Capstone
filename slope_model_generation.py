@@ -253,6 +253,12 @@ def plot_green(green_gradients):
     return
 
 def orchestration(ply_file):
+    # Display output
+    print()
+    print('#'*75 + '\n')
+    print('Starting slope generation module...\n')
+    print('#'*75 + '\n')
+
     # Allocate grid vector memory
     lst = np.zeros(GRID_SIZE_X)
     intermediate_step = list(zip(lst, lst, lst))
@@ -303,12 +309,6 @@ def orchestration(ply_file):
 
 # Insertion point
 if __name__ == '__main__':
-    # Display output
-    print()
-    print('#'*75 + '\n')
-    print('Starting slope generation module...\n')
-    print('#'*75 + '\n')
-
     # Read in arguments
     parser = argparse.ArgumentParser(description='Find slopes from a ply file')
     parser.add_argument('ply_file', metavar='file', type=str, default=Path('DataTest', 'GrassPatch01', 'Output', 'merged.ply'), help='Path to ply file')
@@ -316,5 +316,3 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     orchestration(args.ply_file)
-
-    
