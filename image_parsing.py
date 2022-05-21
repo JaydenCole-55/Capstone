@@ -120,7 +120,7 @@ def transfer_images(image_folder_path):
 
     # Move files from image directory
     for file_name in os.listdir(image_folder_path):
-        shutil.copy(image_folder_path + "/" + file_name, IMAGE_DIR + file_name)
+        shutil.copy(Path(image_folder_path, file_name), Path(IMAGE_DIR,file_name))
         # We can use move instead and that will remove the files from their existsing dir. What behaviour do we want?
 
     return
@@ -192,7 +192,7 @@ def create_gps_overrides(gps_image_matches): # gps_image_matches: [GPS_IMAGE]
     # Create JSON object
     for gps_image_match in gps_image_matches:
         if gps_image_match.image_name != IMAGE_DNE:
-            exif_overrides[gps_image_match.image_name] = gps_image_match.format_gps_data()
+            exif_overrides[gps_image_match.image_name] = {"gps" : gps_image_match.format_gps_data()}
 
     # Write JSON object to file
     with open(DATA_DIR + GPS_OVERRIDE_FILE, WRITE_FILE) as outfile:
@@ -233,8 +233,8 @@ def image_parsing(images_folder, gps_data_file):
 # Insertion point
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Image Parsing Module')
-    parser.add_argument('images_folder', metavar='folder', type=str, default=Path('DataTest', 'GrassPatch01', 'Images'), help='Path to images')
-    parser.add_argument('gps_data_file', metavar='file', type=str, default=Path('gps_data_example.txt'), help='GPS data for Images')
+    parser.add_argument('--images_folder', metavar='folder', type=str, default=Path('DataTest', 'GPS_data_test', 'input', 'images'), help='Path to images')
+    parser.add_argument('--gps_data_file', metavar='file', type=str, default=Path('DataTest', 'GPS_data_test', 'input', 'GPS_data.csv'), help='GPS data for Images')
 
     args = parser.parse_args()
 

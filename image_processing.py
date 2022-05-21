@@ -20,24 +20,28 @@ import subprocess
 from pathlib import Path
 import argparse
 
+from image_parsing import CONFIG_YAML
+
 ###################################################################################################
 #
 #                                            CONSTANTS
 #
 ###################################################################################################
-IMAGE_NAME = 'puttfromthesky'
+IMAGE_NAME = 'puttfromthesky2'
 CONTAINER_NAME = 'PFS_1'
 PROCESSING_FOLDER = 'green'
-PLY_FILE = PROCESSING_FOLDER + "/undistorted/depthmaps/merged.ply"
+PLY_FILE = PROCESSING_FOLDER + '/undistorted/depthmaps/merged.ply'
 DOCKER_FILE_PATH = './OpenSfM/'
 
+IMAGE_PATH = 'images'
+EXIF_JSON = 'exif_overrides.json'
 
 ###################################################################################################
 #
 #                                            FUNCTIONS
 #
 ###################################################################################################
-def process_images(host_images_folder, host_destination_folder):
+def process_images(host_input_folder, host_destination_folder):
     # Indicate beginning of module
     print()
     print('#'*75 + '\n')
@@ -67,7 +71,9 @@ def process_images(host_images_folder, host_destination_folder):
     #   3. Copy image data to Docker Image
     print('Copying images to container')
     output = subprocess.check_output(['docker', 'exec', CONTAINER_NAME, 'mkdir', 'data/' + PROCESSING_FOLDER])
-    output = subprocess.check_output(['docker', 'cp', host_images_folder, container_ID + ':/source/OpenSfM/data/' + PROCESSING_FOLDER])
+    output = subprocess.check_output(['docker', 'cp', Path(host_input_folder, IMAGE_PATH) , container_ID + ':/source/OpenSfM/data/' + PROCESSING_FOLDER])
+    output = subprocess.check_output(['docker', 'cp', Path(host_input_folder, EXIF_JSON),   container_ID + ':/source/OpenSfM/data/' + PROCESSING_FOLDER])
+    output = subprocess.check_output(['docker', 'cp', Path(host_input_folder, CONFIG_YAML), container_ID + ':/source/OpenSfM/data/' + PROCESSING_FOLDER])
 
     #   4. Run the image processing pipeline in the Docker Image
     print('Running processing pipeline... this can take 30-40 minutes')
@@ -76,6 +82,9 @@ def process_images(host_images_folder, host_destination_folder):
     #   5. Copy results from Docker to host machine
     print('Collecting output from processing pipeline')
     output = subprocess.check_output(['docker', 'cp', container_ID + ':/source/OpenSfM/data/' + PLY_FILE, host_destination_folder])
+
+    # Uncomment to copy whole data folder from docker image
+    #output = subprocess.check_output(['docker', 'cp', container_ID + ':/source/OpenSfM/data/green/', host_destination_folder])
 
     #   6. Delete container from docker
     output = subprocess.check_output(['docker', 'container', 'stop', container_ID])
@@ -89,8 +98,8 @@ def process_images(host_images_folder, host_destination_folder):
 if __name__ == '__main__':
     # Run an example processing pipeline
     parser = argparse.ArgumentParser(description='Image Processing Module')
-    parser.add_argument('images_folder', metavar='folder', type=str, default=Path('DataTest', 'PICS for GPS-20220412T022518Z-001', 'input', 'images'), help='Path to images')
-    parser.add_argument('output_folder', metavar='file', type=str, default=Path('DataTest', 'PICS for GPS-20220412T022518Z-001', 'output'), help='Path to gps_data file')
+    parser.add_argument('-i', '--images_folder', metavar='folder', type=str, default=Path('imageData'), help='Path to input folder')
+    parser.add_argument('-o', '--output_folder', metavar='file', type=str, default=Path('DataTest', 'GPS_Data_test', 'output'), help='Path to gps_data file')
 
     args = parser.parse_args()
 
