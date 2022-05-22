@@ -9,6 +9,7 @@
 # Creation date: 2022-05-21
 #
 ###################################################################################################
+from configparser import Interpolation
 import math
 import copy
 import argparse
@@ -265,6 +266,34 @@ def print_grid(array_2d, formatting):
 
     return
 
+def normalize(X, Y):
+    #######################################
+    #
+    # Normalize the X and Y vectors for quiver plot
+    #
+    ######################################
+    qX = []
+    qY = []
+
+    for i in range(GRID_SIZE_Y):
+        qx = []
+        qy = []
+        for j in range(GRID_SIZE_X):
+            xVal = X[i][j]
+            yVal = Y[i][j]
+            if (xVal == 0 and yVal == 0):
+                qx.append(0)
+                qy.append(0)
+            else:
+                qx.append(xVal / np.sqrt(xVal**2 + yVal**2))
+                qy.append(yVal / np.sqrt(xVal**2 + yVal**2))
+
+        qX.append(qx)
+        qY.append(qy)
+
+    return [qX, qY]
+
+
 def plot_green(slope_mag, slope_dir, data):
     #######################################
     #
@@ -277,18 +306,18 @@ def plot_green(slope_mag, slope_dir, data):
     ######################################
 
     # Define grid points
-    xPoints = np.linspace(0, GRID_SIZE_Y, GRID_SIZE_X, False)
-    yPoints = np.linspace(0, GRID_SIZE_Y, GRID_SIZE_X, False)
+    xPoints = np.linspace(0, GRID_SIZE_X, GRID_SIZE_X, False)
+    yPoints = np.linspace(0, GRID_SIZE_Y, GRID_SIZE_Y, False)
     xx = []
     yy = []
     mag = []
 
     # Map gradients to X and Y slopes
-    for j in range(GRID_SIZE_X):
+    for i in range(GRID_SIZE_Y):
         magArr = []
         xRow = []
         yRow = []
-        for i in range(GRID_SIZE_Y):
+        for j in range(GRID_SIZE_X):
             if (data[i][j] == 0):
                 magArr.append(0)
                 xRow.append(0)
@@ -301,14 +330,20 @@ def plot_green(slope_mag, slope_dir, data):
         xx.append(xRow)
         yy.append(yRow)
 
-    # Plot
-    fig, ax = plt.subplots()
+    # Normalize arrows for quiver plot
+    [qX, qY] = normalize(xx, yy)
 
-    #ax.contour(xPoints, yPoints, zz, colors="lightgrey")
-    #ax.quiver(xPoints, yPoints, xx, yy, scale=4, scale_units="inches")
-    ax.pcolor(mag)
+    # Plot
+    plt.quiver(xPoints, yPoints, qX, qY, scale=5, scale_units="inches")
+    plt.imshow(mag, cmap="jet", interpolation="hanning")
+    plt.colorbar()
+
+    # Interpolcation methods = [None, 'none', 'nearest', 'bilinear', 'bicubic', 
+    # 'spline16', 'spline36', 'hanning', 'hamming', 'hermite', 'kaiser', 'quadric',
+    # 'catrom', 'gaussian', 'bessel', 'mitchell', 'sinc', 'lanczos']
 
     plt.show()
+    
 
     return
 
