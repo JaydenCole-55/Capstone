@@ -51,6 +51,29 @@ class Surface_Data(object):
         self.y       = np.zeros(num_verticies)
         self.z       = np.zeros(num_verticies)
 
+class Grid_Element(object):
+    ################################
+    # Create grid element
+    ################################
+    def __init__(self, gradient_vector):
+        #Compute vector magnitudes
+        self.EW_mag = np.sqrt(gradient_vector[X]**2 + gradient_vector[Z]**2)
+        self.EW_dir = 1 if gradient_vector[X] > 0 else -1
+        self.NS_mag = np.sqrt(gradient_vector[Y]**2 + gradient_vector[Z]**2)
+        self.NS_dir = 1 if gradient_vector[Y] > 0 else -1
+        self.overall_mag = np.sqrt(gradient_vector[X]**2 + gradient_vector[Y]**2 + gradient_vector[Z]**2)
+
+    def get_overall_mag(self):
+        return self.overall_mag
+    
+    def get_EW_vect(self):
+        # Returns the EW vector where west is positive (not sure of this)
+        return self.EW_mag * self.EW_dir
+
+    def get_NS_vect(self):
+        # Returns the NS vector where south is positive (not sure of this)
+        return self.NS_mag * self.NS_dir
+
 
 ###################################################################################################
 #
@@ -173,86 +196,7 @@ def calculate_gradient(indicies, s_data, grid_location):
         return gradient
 
 
-def determine_slope_color(xx, yy, zz):
-    #######################################
-    #
-    # Determines the colour of a slope vector for the plot
-    #
-    # Input: 2D array of with each element defining the gradient of a section of the green
-    # Returns: Color array for the quiver plot
-    #
-    ######################################
-
-    # Colour
-    g = "green"
-    y = "goldenrod" 
-    o = "darkorange"
-    r = "red"
-
-    slope = 0
-    denom = math.sqrt(xx**2 + yy**2)
-    if denom > 0:
-        slope = abs(math.atan( zz / math.sqrt(xx**2 + yy**2) ))
-
-    # Determine color from slope
-    color = r
-    if slope < 1.5:
-        color = g
-    elif slope < 2.5:
-        color = y 
-    elif slope < 3.5:
-        color = o 
-
-    return color
-
-
-def plot_green(green_gradients):
-    #######################################
-    #
-    # Plots the green slopes in a quiver plot
-    #
-    # Input: 2D array of with each element defining the gradient of a section of the green
-    # Returns: None
-    # Output: Quiver Plot
-    #
-    ######################################
-
-    # Define grid points
-    xPoints = np.linspace(0, GRID_SIZE_X, GRID_SIZE_Y, False)
-    yPoints = np.linspace(0, GRID_SIZE_X, GRID_SIZE_Y, False)
-    xx = []
-    yy = []
-    zz = []
-    cc = []
-
-    # Map gradients to X and Y slopes
-    for i in range(GRID_SIZE_X):
-        xRow = []
-        yRow = []
-        zRow = []
-        for j in range(GRID_SIZE_Y):
-            xRow.append(green_gradients[i][j][X])
-            yRow.append(green_gradients[i][j][Y])
-            zRow.append(green_gradients[i][j][Z])
-            cc.append(determine_slope_color(green_gradients[i][j][X], 
-                                            green_gradients[i][j][Y], 
-                                            green_gradients[i][j][Z]))
-
-        xx.append(xRow)
-        yy.append(yRow)
-        zz.append(zRow)
-
-    # Plot
-    fig, ax = plt.subplots()
-
-    ax.contour(xPoints, yPoints, zz, colors="lightgrey")
-    ax.quiver(xPoints, yPoints, xx, yy, scale=4, scale_units="inches", color=cc)
-
-    plt.show()
-
-    return
-
-def orchestration(ply_file):
+def create_gradient_grid(ply_file):
     # Display output
     print()
     print('#'*75 + '\n')
@@ -302,10 +246,134 @@ def orchestration(ply_file):
                 grid_vector[i][j] = calculate_gradient(indicies, data, (x_start, y_start, x_finish, y_finish))
                 pass
 
-    print("\nPlotting Green")
-    plot_green(grid_vector)
+        
+    return grid_vector
 
-    print('Done')
+
+def create_grid_elements(gradient_vectors):
+    #######################################
+    # Converts gradient elements into grid_element's
+    ######################################
+    grid_elements = []
+
+    for row in gradient_vectors:
+        grid_row = []
+        for val in row:
+            grid_row.append(Grid_Element(val))
+        grid_elements.append(val)
+
+    return grid_elements
+
+
+def print_grid(array_2d, formatting):
+    #######################################
+    #
+    # Prints a 2D array as a grid
+    #
+    ######################################
+    for row in array_2d:
+        print_row = "";
+        for val in row:
+            print_row += formatting.format(val[Z])
+        print(print_row)
+
+    return
+
+
+def normalize(X, Y):
+    #######################################
+    #
+    # Normalize the X and Y vectors for quiver plot
+    #
+    ######################################
+    qX = []
+    qY = []
+
+    for i in range(GRID_SIZE_Y):
+        qx = []
+        qy = []
+        for j in range(GRID_SIZE_X):
+            xVal = X[i][j]
+            yVal = Y[i][j]
+            if (xVal == 0 and yVal == 0):
+                qx.append(0)
+                qy.append(0)
+            else:
+                qx.append(xVal / np.sqrt(xVal**2 + yVal**2))
+                qy.append(yVal / np.sqrt(xVal**2 + yVal**2))
+
+        qX.append(qx)
+        qY.append(qy)
+
+    return [qX, qY]
+
+
+def plot_green(data):
+    #######################################
+    #
+    # Plots the green slopes in a quiver plot
+    #
+    # Input: 2D array of with each element defining a grid element
+    # Returns: None
+    # Output: Heat map and quiver plot
+    #
+    ######################################
+
+    # Define grid points
+    xPoints = np.linspace(0, GRID_SIZE_X, GRID_SIZE_X, False)
+    yPoints = np.linspace(0, GRID_SIZE_Y, GRID_SIZE_Y, False)
+    xx = []
+    yy = []
+    mag = []
+
+    # Map gradients to X and Y slopes
+    for i in range(GRID_SIZE_Y):
+        magArr = []
+        xRow = []
+        yRow = []
+        for j in range(GRID_SIZE_X):
+            if (data[i][j] == 0):
+                magArr.append(0)
+                xRow.append(0)
+                yRow.append(0)
+            else:
+                magArr.append(data[i][j].get_overall_mag())
+                xRow.append(data[i][j].get_EW_vect())
+                yRow.append(data[i][j].get_NS_vect())
+        mag.append(magArr)
+        xx.append(xRow)
+        yy.append(yRow)
+
+    # Normalize arrows for quiver plot
+    [qX, qY] = normalize(xx, yy)
+
+    # Plot
+    plt.quiver(xPoints, yPoints, qX, qY, scale=5, scale_units="inches")
+    plt.imshow(mag, cmap="jet", interpolation="hanning")
+    plt.colorbar()
+
+    # Interpolcation methods = [None, 'none', 'nearest', 'bilinear', 'bicubic', 
+    # 'spline16', 'spline36', 'hanning', 'hamming', 'hermite', 'kaiser', 'quadric',
+    # 'catrom', 'gaussian', 'bessel', 'mitchell', 'sinc', 'lanczos']
+
+    plt.show()
+
+    return
+
+def orchestration(ply_file):
+    #######################################
+    #
+    # Calls all the functions needed to create greens map 
+    #
+    ######################################
+    gradient_grid = create_gradient_grid(ply_file)
+
+    grid_elements = create_grid_elements(gradient_grid)
+
+    plot_green(grid_elements)
+
+    return
+
 
 # Insertion point
 if __name__ == '__main__':

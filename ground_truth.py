@@ -299,9 +299,9 @@ def plot_green(slope_mag, slope_dir, data):
     #
     # Plots the green slopes in a quiver plot
     #
-    # Input: 2D array of with each element defining the gradient of a section of the green
+    # Input: 2D array of with each element defining a grid element
     # Returns: None
-    # Output: Quiver Plot
+    # Output: Heat map and quiver plot
     #
     ######################################
 
