@@ -347,7 +347,7 @@ def plot_green(slope_mag, slope_dir, data):
 
     return
 
-def orchestration(csv_file):
+def generate_slope_map(csv_file):
 
     data = read_csv_file(csv_file)
 
@@ -364,4 +364,4 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    orchestration(args.csv_file)
+    generate_slope_map(args.csv_file)

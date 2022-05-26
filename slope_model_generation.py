@@ -34,6 +34,7 @@ GRID_SIZE_X = 20
 GRID_SIZE_Y = 20
 
 GRADIENT_FILE = "grid_vector.txt"
+PLY_FILE_PATH = Path("green", "undistorted", "depthmaps", "merged.ply")
 
 ###################################################################################################
 #
@@ -386,12 +387,15 @@ def plot_green(data):
 
     return
 
-def orchestration(ply_file, store_gradients, read_gradients):
+
+def generate_slope_map(output_folder, store_gradients, read_gradients):
     #######################################
     #
     # Calls all the functions needed to create greens map 
     #
     ######################################
+    ply_file = Path(output_folder, PLY_FILE_PATH)
+
     gradient_grid = create_gradient_grid(ply_file, store_gradients, read_gradients)
 
     grid_elements = create_grid_elements(gradient_grid)
@@ -405,10 +409,10 @@ def orchestration(ply_file, store_gradients, read_gradients):
 if __name__ == '__main__':
     # Read in arguments
     parser = argparse.ArgumentParser(description='Find slopes from a ply file')
-    parser.add_argument('ply_file', metavar='file', type=str, default=Path('DataTest', 'GrassPatch01', 'Output', 'merged.ply'), help='Path to ply file')
+    parser.add_argument('output_folder', metavar='file', type=str, default=Path('DataTest', 'PICS for GPS-20220412T022518Z-001', 'output'), help='Output folder path')
     parser.add_argument('--store_gradients', action='store_true', help='Store calculated gradients to memory')
     parser.add_argument('--read_gradients', action='store_true', help='Get gradients from memory')
 
     args = parser.parse_args()
 
-    orchestration(args.ply_file, args.store_gradients, args.read_gradients)
+    generate_slope_map(args.output_folder, args.store_gradients, args.read_gradients)
