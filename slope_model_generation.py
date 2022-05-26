@@ -375,8 +375,9 @@ def plot_green(data):
     [qX, qY] = normalize(xx, yy)
 
     # Plot
-    plt.quiver(xPoints, yPoints, qX, qY, scale=5, scale_units="inches")
+    plt.quiver(xPoints, yPoints, qX, qY, scale=7, scale_units="inches")
     plt.imshow(mag, cmap="jet", interpolation="hanning")
+    plt.clim(0.0, 5.0)
     plt.colorbar()
 
     # Interpolcation methods = [None, 'none', 'nearest', 'bilinear', 'bicubic', 

@@ -336,6 +336,7 @@ def plot_green(slope_mag, slope_dir, data):
     # Plot
     plt.quiver(xPoints, yPoints, qX, qY, scale=5, scale_units="inches")
     plt.imshow(mag, cmap="jet", interpolation="hanning")
+    plt.clim(0.0, 5.0)
     plt.colorbar()
 
     # Interpolcation methods = [None, 'none', 'nearest', 'bilinear', 'bicubic', 
