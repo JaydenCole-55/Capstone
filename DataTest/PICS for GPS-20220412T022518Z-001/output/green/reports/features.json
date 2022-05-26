@@ -1,0 +1,140 @@
+{
+    "wall_time": 13.477046600019094,
+    "image_reports": [
+        {
+            "image": "2022040919054130.jpg",
+            "num_features": 5231,
+            "wall_time": 1.998428300023079
+        },
+        {
+            "image": "2022040919045167.jpg",
+            "num_features": 5090,
+            "wall_time": 2.30730109999422
+        },
+        {
+            "image": "2022040919023072.jpg",
+            "num_features": 5307,
+            "wall_time": 2.1261366000398993
+        },
+        {
+            "image": "2022040918552175.jpg",
+            "num_features": 5287,
+            "wall_time": 1.82421529997373
+        },
+        {
+            "image": "2022040919072849.jpg",
+            "num_features": 5027,
+            "wall_time": 1.7593149000313133
+        },
+        {
+            "image": "2022040919035956.jpg",
+            "num_features": 5112,
+            "wall_time": 1.886812899960205
+        },
+        {
+            "image": "2022040918595809.jpg",
+            "num_features": 5122,
+            "wall_time": 1.8467953000217676
+        },
+        {
+            "image": "2022040919063471.jpg",
+            "num_features": 5268,
+            "wall_time": 1.8839151000138372
+        },
+        {
+            "image": "2022040918562853.jpg",
+            "num_features": 5209,
+            "wall_time": 1.794294200022705
+        },
+        {
+            "image": "2022040919021430.jpg",
+            "num_features": 5147,
+            "wall_time": 1.7067187000066042
+        },
+        {
+            "image": "2022040918592688.jpg",
+            "num_features": 5071,
+            "wall_time": 1.7992025999701582
+        },
+        {
+            "image": "2022040919065176.jpg",
+            "num_features": 5038,
+            "wall_time": 1.769918299978599
+        },
+        {
+            "image": "2022040919035596.jpg",
+            "num_features": 5175,
+            "wall_time": 1.5753777000354603
+        },
+        {
+            "image": "2022040918565268.jpg",
+            "num_features": 5061,
+            "wall_time": 1.478304999996908
+        },
+        {
+            "image": "2022040919064833.jpg",
+            "num_features": 5119,
+            "wall_time": 1.708846600027755
+        },
+        {
+            "image": "2022040919013170.jpg",
+            "num_features": 5204,
+            "wall_time": 2.4347732000169344
+        },
+        {
+            "image": "2022040918545855.jpg",
+            "num_features": 5275,
+            "wall_time": 2.209642200032249
+        },
+        {
+            "image": "2022040918555135.jpg",
+            "num_features": 5357,
+            "wall_time": 1.7894935999647714
+        },
+        {
+            "image": "2022040918542557.jpg",
+            "num_features": 5155,
+            "wall_time": 1.6602612999849953
+        },
+        {
+            "image": "2022040919001629.jpg",
+            "num_features": 5031,
+            "wall_time": 1.8192440000129864
+        },
+        {
+            "image": "2022040918590011.jpg",
+            "num_features": 5035,
+            "wall_time": 1.8017829000018537
+        },
+        {
+            "image": "2022040919074834.jpg",
+            "num_features": 4750,
+            "wall_time": 1.551621399994474
+        },
+        {
+            "image": "2022040919043251.jpg",
+            "num_features": 5102,
+            "wall_time": 1.8959549000137486
+        },
+        {
+            "image": "2022040918560352.jpg",
+            "num_features": 5315,
+            "wall_time": 1.7841750999796204
+        },
+        {
+            "image": "2022040919015614.jpg",
+            "num_features": 5066,
+            "wall_time": 1.6888266000314616
+        },
+        {
+            "image": "2022040919060692.jpg",
+            "num_features": 5251,
+            "wall_time": 1.713888099999167
+        },
+        {
+            "image": "2022040919070686.jpg",
+            "num_features": 5174,
+            "wall_time": 1.532231499964837
+        }
+    ]
+}

@@ -1,0 +1,11 @@
+###################################################################################################
+#
+#                                         CONFIG.YAML
+#
+#
+# Defines override configuration paramaters for image processing pipeline
+# Authors: Highfly Technologies
+# Creation Date: 26/05/2022 06:20:30
+#
+###################################################################################################
+processes: 4
