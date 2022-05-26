@@ -19,11 +19,12 @@ from pathlib import Path
 
 from image_parsing import image_parsing
 from image_processing import process_images
-from slope_model_generation import orchestration
+from slope_model_generation import generate_slope_map
 
-PLY_FILE = "merged.ply"
+STORE_GRADIENTS = True
+READ_GRADIENTS = True
 
-def run_pipeline(input_folder, gps_file, output_folder):
+def run_pipeline(input_folder, output_folder):
     ########################################
     #
     # Run the pipeline
@@ -31,21 +32,22 @@ def run_pipeline(input_folder, gps_file, output_folder):
     ########################################
     
     # 1. Run the image and GPS combination data
-    image_parsing(input_folder, gps_file)
+    image_parsing(input_folder)
 
     # 2. Run the image processing
-    process_images(input_folder, output_folder)
+    process_images(output_folder)
 
     # 3. Run the slope model generation script
-    orchestration(Path(output_folder, PLY_FILE))
+    generate_slope_map(output_folder, STORE_GRADIENTS, not READ_GRADIENTS)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run the full image processing pipeline')
-    parser.add_argument('images_folder', metavar='folder', type=str, default=Path('DataTest', 'PICS for GPS-20220412T022518Z-001', 'input', 'images'      ), help='Path to images')
-    parser.add_argument('gps_data',      metavar='file',   type=str, default=Path('DataTest', 'PICS for GPS-20220412T022518Z-001', 'input', 'GPS_data.txt'), help='Path to gps_data file')
-    parser.add_argument('output_folder', metavar='folder', type=str, default=Path('DataTest', 'PICS for GPS-20220412T022518Z-001', 'output'               ), help='Path to output file')
+    parser.add_argument('data_folder',  metavar='folder', type=str, default=Path('DataTest', 'PICS for GPS-20220412T022518Z-001' ), help='Path to input folder')
 
     args = parser.parse_args()
 
-    run_pipeline(args.images_folder, args.gps_data, args.output_folder)
+    input_folder = Path(args.data_folder, "input")
+    output_folder = Path(args.data_folder, "output")
+
+    run_pipeline(input_folder, output_folder)

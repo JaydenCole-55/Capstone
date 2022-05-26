@@ -32,8 +32,8 @@ from datetime import datetime
 #                                            CONSTANTS
 #
 ###################################################################################################
-DATA_DIR = "imageData/"
-IMAGE_DIR = "imageData/images/"
+OUTPUT_DATA_DIR = Path("imageData")
+OUTPUT_IMAGE_DIR = Path(OUTPUT_DATA_DIR, 'images')
 GPS_OVERRIDE_FILE = "exif_overrides.json"
 CONFIG_YAML = "config.yaml"
 
@@ -111,23 +111,23 @@ def validate_args(images_folder, gps_data_file):
 
 def transfer_images(image_folder_path):
     # Remove existing directory if it exists
-    if os.path.isdir(DATA_DIR):
-        shutil.rmtree(DATA_DIR)
+    if os.path.isdir(OUTPUT_DATA_DIR):
+        shutil.rmtree(OUTPUT_DATA_DIR)
 
     # Make Directory for images
-    os.mkdir(DATA_DIR)
-    os.mkdir(IMAGE_DIR)
+    os.mkdir(OUTPUT_DATA_DIR)
+    os.mkdir(OUTPUT_IMAGE_DIR)
 
     # Move files from image directory
     for file_name in os.listdir(image_folder_path):
-        shutil.copy(Path(image_folder_path, file_name), Path(IMAGE_DIR,file_name))
+        shutil.copy(Path(image_folder_path, file_name), Path(OUTPUT_IMAGE_DIR,file_name))
         # We can use move instead and that will remove the files from their existsing dir. What behaviour do we want?
 
     return
 
 
 def add_config_file():
-    config_file = open(DATA_DIR + CONFIG_YAML, 'w')
+    config_file = open(Path(OUTPUT_DATA_DIR, CONFIG_YAML), 'w')
 
     # Add File Header Comment
     config_file.write('#'*99+'\n')
@@ -141,7 +141,6 @@ def add_config_file():
     config_file.write("#\n")
     config_file.write('#'*99+'\n')
 
-    config_file.write("feature_min_frames: " + str(MATCHING_GPS_NEIGHBOURS) + "\n")
     config_file.write("processes: " + str(PROCESSES) + "\n")
 
     config_file.close()
@@ -176,7 +175,7 @@ def read_gps_data(gps_file_path):
 
 def match_gps_to_images(gps_data_points):
     # Get image list
-    image_files = os.listdir(IMAGE_DIR)
+    image_files = os.listdir(OUTPUT_IMAGE_DIR)
     files = list(map(lambda x: x.lower(), image_files))
     
     # Search image list for each image and update image_name
@@ -195,19 +194,22 @@ def create_gps_overrides(gps_image_matches): # gps_image_matches: [GPS_IMAGE]
             exif_overrides[gps_image_match.image_name] = {"gps" : gps_image_match.format_gps_data()}
 
     # Write JSON object to file
-    with open(DATA_DIR + GPS_OVERRIDE_FILE, WRITE_FILE) as outfile:
+    with open(Path(OUTPUT_DATA_DIR, GPS_OVERRIDE_FILE), WRITE_FILE) as outfile:
         json.dump(exif_overrides, outfile)
 
     return 0
 
 
-def image_parsing(images_folder, gps_data_file):
+def image_parsing(input_folder):
 
     # Indicate beginning of module
     print()
     print('#'*75 + '\n')
     print('Starting image parsing module...\n')
     print('#'*75 + '\n')
+
+    images_folder = Path(input_folder, 'images')
+    gps_data_file = Path(input_folder, 'GPS_data.csv')
 
     # Run the image parsing module
     print("Validating arguments")
@@ -233,10 +235,9 @@ def image_parsing(images_folder, gps_data_file):
 # Insertion point
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Image Parsing Module')
-    parser.add_argument('--images_folder', metavar='folder', type=str, default=Path('DataTest', 'GPS_data_test', 'input', 'images'), help='Path to images')
-    parser.add_argument('--gps_data_file', metavar='file', type=str, default=Path('DataTest', 'GPS_data_test', 'input', 'GPS_data.csv'), help='GPS data for Images')
+    parser.add_argument('--input_folder', metavar='folder', type=str, default=Path('DataTest', 'PICS for GPS-20220412T022518Z-001', 'input'), help='Input folder path')
 
     args = parser.parse_args()
 
     # Run Image Parsing Module
-    image_parsing(args.images_folder, args.gps_data_file)
+    image_parsing(args.input_folder)
