@@ -33,6 +33,8 @@ Z = 2
 GRID_SIZE_X = 20
 GRID_SIZE_Y = 20
 
+GRADIENT_FILE = "grid_vector.txt"
+
 ###################################################################################################
 #
 #                                            CLASSES
@@ -196,7 +198,7 @@ def calculate_gradient(indicies, s_data, grid_location):
         return gradient
 
 
-def create_gradient_grid(ply_file):
+def create_gradient_grid(ply_file, store_gradients, read_gradients):
     # Display output
     print()
     print('#'*75 + '\n')
@@ -226,27 +228,51 @@ def create_gradient_grid(ply_file):
     length_y = max_y - min_y
     step_y = length_y/GRID_SIZE_Y
 
-    # Go through each grid area and find average slope
-    for i in tqdm(range(GRID_SIZE_X), desc="Left to Right slope Calculations"):
-        for j in tqdm(range(GRID_SIZE_Y), desc="Front to Back Calculations", leave=False):
-            # Determine grid area x and y selections
-            x_start  = min_x + step_x*i
-            x_finish = min_x + step_x*(i+1)
-            y_start  = min_y + step_y*j
-            y_finish = min_y + step_y*(j+1)
+    # Determine if to read gradients from memory or to calculate them
+    if read_gradients:
+        print("Reading Gradients from file: " + GRADIENT_FILE)
+        file_handle = open(GRADIENT_FILE, "r")
+        for i in range(GRID_SIZE_X):
+            for j in range(GRID_SIZE_Y):
+                grid_vector[i][j] = tuple(np.asarray(file_handle.readline()[:-1].split(',')).astype(float))
 
-            # Find all points within this grid area
-            indicies = list(filter(lambda k: data.x[k] >= x_start and data.x[k] <= x_finish and data.y[k] >= y_start and data.y[k] <= y_finish, range(len(data.x))))
+        file_handle.close()
 
-            if len(indicies) <= 1:
-                # No gradient can be given for a grid area that contains less than two points
-                continue
-            else:
-                # Find a vector that averages the slopes of the grid area points
-                grid_vector[i][j] = calculate_gradient(indicies, data, (x_start, y_start, x_finish, y_finish))
-                pass
+    else:
+        # Go through each grid area and find average slope
+        for i in tqdm(range(GRID_SIZE_X), desc="Left to Right slope Calculations"):
+            for j in tqdm(range(GRID_SIZE_Y), desc="Front to Back Calculations", leave=False):
+                # Determine grid area x and y selections
+                x_start  = min_x + step_x*i
+                x_finish = min_x + step_x*(i+1)
+                y_start  = min_y + step_y*j
+                y_finish = min_y + step_y*(j+1)
 
-        
+                # Find all points within this grid area
+                indicies = list(filter(lambda k: data.x[k] >= x_start and data.x[k] <= x_finish and data.y[k] >= y_start and data.y[k] <= y_finish, range(len(data.x))))
+
+                if len(indicies) <= 1:
+                    # No gradient can be given for a grid area that contains less than two points
+                    continue
+                else:
+                    # Find a vector that averages the slopes of the grid area points
+                    grid_vector[i][j] = calculate_gradient(indicies, data, (x_start, y_start, x_finish, y_finish))
+
+        if store_gradients:
+            # Write the gradients to a text file
+            file_handle = open(GRADIENT_FILE, "w")
+            for i in range(GRID_SIZE_X):
+                for j in range(GRID_SIZE_Y):
+
+                    if not (i == 0 and j == 0):
+                        file_handle.write('\n')
+
+                    file_handle.write(str(grid_vector[i][j][0]) + ',')
+                    file_handle.write(str(grid_vector[i][j][1]) + ',')
+                    file_handle.write(str(grid_vector[i][j][2]))
+
+            file_handle.close()
+
     return grid_vector
 
 
@@ -260,7 +286,7 @@ def create_grid_elements(gradient_vectors):
         grid_row = []
         for val in row:
             grid_row.append(Grid_Element(val))
-        grid_elements.append(val)
+        grid_elements.append(grid_row)
 
     return grid_elements
 
@@ -360,13 +386,13 @@ def plot_green(data):
 
     return
 
-def orchestration(ply_file):
+def orchestration(ply_file, store_gradients, read_gradients):
     #######################################
     #
     # Calls all the functions needed to create greens map 
     #
     ######################################
-    gradient_grid = create_gradient_grid(ply_file)
+    gradient_grid = create_gradient_grid(ply_file, store_gradients, read_gradients)
 
     grid_elements = create_grid_elements(gradient_grid)
 
@@ -380,7 +406,9 @@ if __name__ == '__main__':
     # Read in arguments
     parser = argparse.ArgumentParser(description='Find slopes from a ply file')
     parser.add_argument('ply_file', metavar='file', type=str, default=Path('DataTest', 'GrassPatch01', 'Output', 'merged.ply'), help='Path to ply file')
+    parser.add_argument('--store_gradients', action='store_true', help='Store calculated gradients to memory')
+    parser.add_argument('--read_gradients', action='store_true', help='Get gradients from memory')
 
     args = parser.parse_args()
 
-    orchestration(args.ply_file)
+    orchestration(args.ply_file, args.store_gradients, args.read_gradients)
