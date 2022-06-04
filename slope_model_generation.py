@@ -14,13 +14,13 @@
 #   4. Output graphical interpretation of the slopes on the green
 #
 ###################################################################################################
-import math
 import copy
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from pathlib import Path
+from sklearn import linear_model
 
 ###################################################################################################
 #
@@ -30,11 +30,13 @@ from pathlib import Path
 X = 0
 Y = 1
 Z = 2
-GRID_SIZE_X = 20
-GRID_SIZE_Y = 20
+GRID_SIZE_X = 4
+GRID_SIZE_Y = 4
 
 GRADIENT_FILE = "grid_vector.txt"
-PLY_FILE_PATH = Path("green", "undistorted", "depthmaps", "merged.ply")
+PLY_FILE_PATH = Path("green", "undistorted", "depthmaps", "steady_y_increasing-flat.ply")
+#PLY_FILE_PATH = Path("green", "undistorted", "depthmaps", "flat.ply")
+#PLY_FILE_PATH = Path("green", "undistorted", "depthmaps", "corners.ply")
 
 ###################################################################################################
 #
@@ -53,29 +55,6 @@ class Surface_Data(object):
         self.x       = np.zeros(num_verticies)
         self.y       = np.zeros(num_verticies)
         self.z       = np.zeros(num_verticies)
-
-class Grid_Element(object):
-    ################################
-    # Create grid element
-    ################################
-    def __init__(self, gradient_vector):
-        #Compute vector magnitudes
-        self.EW_mag = np.sqrt(gradient_vector[X]**2 + gradient_vector[Z]**2)
-        self.EW_dir = 1 if gradient_vector[X] > 0 else -1
-        self.NS_mag = np.sqrt(gradient_vector[Y]**2 + gradient_vector[Z]**2)
-        self.NS_dir = 1 if gradient_vector[Y] > 0 else -1
-        self.overall_mag = np.sqrt(gradient_vector[X]**2 + gradient_vector[Y]**2 + gradient_vector[Z]**2)
-
-    def get_overall_mag(self):
-        return self.overall_mag
-    
-    def get_EW_vect(self):
-        # Returns the EW vector where west is positive (not sure of this)
-        return self.EW_mag * self.EW_dir
-
-    def get_NS_vect(self):
-        # Returns the NS vector where south is positive (not sure of this)
-        return self.NS_mag * self.NS_dir
 
 
 ###################################################################################################
@@ -158,7 +137,7 @@ def calculate_gradient(indicies, s_data, grid_location):
         zs[counter] = s_data.z[index]
         counter+=1
 
-    # Fit a 2D plane to the data
+    # Fit a 2D plane to the data - Old
     tmp_A = []
     tmp_b = []
     for i in range(len(indicies)):
@@ -176,21 +155,36 @@ def calculate_gradient(indicies, s_data, grid_location):
 
         return (0, 0, 0)
 
-    # Find x, y pt of maximum height within this grid area (will be on a corner)
-    left_bottom  = [x_min, y_min, float(np.squeeze(np.array(x_min * fit[0] + y_min * fit[1] + fit[2])))]
-    left_top     = [x_min, y_max, float(np.squeeze(np.array(x_min * fit[0] + y_max * fit[1] + fit[2])))]
-    right_bottom = [x_max, y_min, float(np.squeeze(np.array(x_max * fit[0] + y_min * fit[1] + fit[2])))]
-    right_top    = [x_max, y_max, float(np.squeeze(np.array(x_max * fit[0] + y_max * fit[1] + fit[2])))]
+    left_top     = [x_min, y_min, float(np.squeeze(np.array(x_min * fit[0] + y_min * fit[1] + fit[2])))]
+    left_bottom  = [x_min, y_max, float(np.squeeze(np.array(x_min * fit[0] + y_max * fit[1] + fit[2])))]
+    right_top    = [x_max, y_min, float(np.squeeze(np.array(x_max * fit[0] + y_min * fit[1] + fit[2])))]
+    right_bottom = [x_max, y_max, float(np.squeeze(np.array(x_max * fit[0] + y_max * fit[1] + fit[2])))]
 
-    # Determine the gradient from the relative z heights of the 4 corners on the plane
-    if abs(left_top[2] - right_bottom[2]) > abs(left_bottom[2] - right_top[2]):
+    # Eliminate floating point error through rounding
+    left_bottom[2]  = round(left_bottom[2], 8)
+    left_top[2]     = round(left_top[2], 8)
+    right_bottom[2] = round(right_bottom[2], 8)
+    right_top[2]    = round(right_top[2], 8)
+
+    if left_top[2] - right_top[2] == 0 and left_top[2] - left_bottom[2] == 0:
+        # Plane is flat, return no gradient vector
+        return (0, 0, 0)
+    elif left_top[2] - left_bottom[2] == 0:
+        # Plane is flat in y direction, return x direction gradient
+        gradient = np.subtract(left_top, right_top)
+    elif left_top[2] - right_top[2] == 0:
+        # Plane is flat in x direction, return y direction gradient
+        gradient = np.subtract(left_top, left_bottom)
+    elif abs(left_top[2] - right_bottom[2]) > abs(left_bottom[2] - right_top[2]):
+        # Diagonal gradient (min_x, min_y <--> max_x, max_y)
         gradient = np.subtract(left_top, right_bottom)
     elif abs(left_bottom[2] - right_top[2]) > abs(left_top[2] - right_bottom[2]):
+        # Diagonal gradient (min_x, max_y <--> min_x, max_y)
         gradient = np.subtract(left_bottom, right_top)
-    elif left_top[2] - right_top[2] == 0:
-        gradient = np.subtract(left_top, left_bottom)
-    elif left_top[2] - left_bottom[2] == 0:
-        gradient = np.subtract(left_top, right_top)
+    else:
+        # Should never end up here, print error for debugging, return (0, 0, 0)
+        print("Calculated gradient did not fall into the 5 anticipate categories of gradient. Debug here")
+        return (0, 0, 0)
 
     # Ensure the gradient points down the slope
     if gradient[2] > 0:
@@ -241,13 +235,13 @@ def create_gradient_grid(ply_file, store_gradients, read_gradients):
 
     else:
         # Go through each grid area and find average slope
-        for i in tqdm(range(GRID_SIZE_X), desc="Left to Right slope Calculations"):
-            for j in tqdm(range(GRID_SIZE_Y), desc="Front to Back Calculations", leave=False):
+        for i in tqdm(range(GRID_SIZE_Y), desc="Y axis (NS) calculations"):
+            for j in tqdm(range(GRID_SIZE_X), desc="X axis (EW) calculations", leave=False):
                 # Determine grid area x and y selections
-                x_start  = min_x + step_x*i
-                x_finish = min_x + step_x*(i+1)
-                y_start  = min_y + step_y*j
-                y_finish = min_y + step_y*(j+1)
+                x_start  = min_x + step_x*j
+                x_finish = min_x + step_x*(j+1)
+                y_start  = min_y + step_y*i
+                y_finish = min_y + step_y*(i+1)
 
                 # Find all points within this grid area
                 indicies = list(filter(lambda k: data.x[k] >= x_start and data.x[k] <= x_finish and data.y[k] >= y_start and data.y[k] <= y_finish, range(len(data.x))))
@@ -268,28 +262,13 @@ def create_gradient_grid(ply_file, store_gradients, read_gradients):
                     if not (i == 0 and j == 0):
                         file_handle.write('\n')
 
-                    file_handle.write(str(grid_vector[i][j][0]) + ',')
-                    file_handle.write(str(grid_vector[i][j][1]) + ',')
-                    file_handle.write(str(grid_vector[i][j][2]))
+                    file_handle.write(str(grid_vector[i][j][X]) + ',')
+                    file_handle.write(str(grid_vector[i][j][Y]) + ',')
+                    file_handle.write(str(grid_vector[i][j][Z]))
 
             file_handle.close()
 
     return grid_vector
-
-
-def create_grid_elements(gradient_vectors):
-    #######################################
-    # Converts gradient elements into grid_element's
-    ######################################
-    grid_elements = []
-
-    for row in gradient_vectors:
-        grid_row = []
-        for val in row:
-            grid_row.append(Grid_Element(val))
-        grid_elements.append(grid_row)
-
-    return grid_elements
 
 
 def print_grid(array_2d, formatting):
@@ -347,8 +326,6 @@ def plot_green(data):
     ######################################
 
     # Define grid points
-    xPoints = np.linspace(0, GRID_SIZE_X, GRID_SIZE_X, False)
-    yPoints = np.linspace(0, GRID_SIZE_Y, GRID_SIZE_Y, False)
     xx = []
     yy = []
     mag = []
@@ -359,23 +336,23 @@ def plot_green(data):
         xRow = []
         yRow = []
         for j in range(GRID_SIZE_X):
-            if (data[i][j] == 0):
+            if (data[i][j][Z] == 0):
                 magArr.append(0)
                 xRow.append(0)
                 yRow.append(0)
             else:
-                magArr.append(data[i][j].get_overall_mag())
-                xRow.append(data[i][j].get_EW_vect())
-                yRow.append(data[i][j].get_NS_vect())
+                magArr.append(abs(data[i][j][Z])*100)
+                xRow.append(data[i][j][X])
+                yRow.append(-1*data[i][j][Y]) # Y positive axis is downward, had to flip to get arrows in correct direction
         mag.append(magArr)
         xx.append(xRow)
         yy.append(yRow)
 
     # Normalize arrows for quiver plot
-    [qX, qY] = normalize(xx, yy)
+    #[qX, qY] = normalize(xx, yy)
 
     # Plot
-    plt.quiver(xPoints, yPoints, qX, qY, scale=7, scale_units="inches")
+    plt.quiver(xx, yy, scale=7, scale_units="inches", pivot="mid")
     plt.imshow(mag, cmap="jet", interpolation="hanning")
     plt.clim(0.0, 5.0)
     plt.colorbar()
@@ -399,9 +376,7 @@ def generate_slope_map(output_folder, store_gradients, read_gradients):
 
     gradient_grid = create_gradient_grid(ply_file, store_gradients, read_gradients)
 
-    grid_elements = create_grid_elements(gradient_grid)
-
-    plot_green(grid_elements)
+    plot_green(gradient_grid)
 
     return
 

@@ -1,140 +1,140 @@
 {
-    "wall_time": 13.477046600019094,
+    "wall_time": 22.594705299998168,
     "image_reports": [
         {
             "image": "2022040919054130.jpg",
             "num_features": 5231,
-            "wall_time": 1.998428300023079
+            "wall_time": 7.524766799993813
         },
         {
             "image": "2022040919045167.jpg",
             "num_features": 5090,
-            "wall_time": 2.30730109999422
+            "wall_time": 2.8016596999950707
         },
         {
             "image": "2022040919023072.jpg",
             "num_features": 5307,
-            "wall_time": 2.1261366000398993
+            "wall_time": 3.6547204999951646
         },
         {
             "image": "2022040918552175.jpg",
             "num_features": 5287,
-            "wall_time": 1.82421529997373
+            "wall_time": 2.3716287999995984
         },
         {
             "image": "2022040919072849.jpg",
             "num_features": 5027,
-            "wall_time": 1.7593149000313133
+            "wall_time": 2.0165368000161834
         },
         {
             "image": "2022040919035956.jpg",
             "num_features": 5112,
-            "wall_time": 1.886812899960205
+            "wall_time": 2.231025999994017
         },
         {
             "image": "2022040918595809.jpg",
             "num_features": 5122,
-            "wall_time": 1.8467953000217676
+            "wall_time": 2.436142899998231
         },
         {
             "image": "2022040919063471.jpg",
             "num_features": 5268,
-            "wall_time": 1.8839151000138372
+            "wall_time": 2.520644000003813
         },
         {
             "image": "2022040918562853.jpg",
             "num_features": 5209,
-            "wall_time": 1.794294200022705
+            "wall_time": 2.0750524000031874
         },
         {
             "image": "2022040919021430.jpg",
             "num_features": 5147,
-            "wall_time": 1.7067187000066042
+            "wall_time": 2.1152402000152506
         },
         {
             "image": "2022040918592688.jpg",
             "num_features": 5071,
-            "wall_time": 1.7992025999701582
+            "wall_time": 2.3514122999913525
         },
         {
             "image": "2022040919065176.jpg",
             "num_features": 5038,
-            "wall_time": 1.769918299978599
+            "wall_time": 2.3345566999923903
         },
         {
             "image": "2022040919035596.jpg",
             "num_features": 5175,
-            "wall_time": 1.5753777000354603
+            "wall_time": 1.8914335999870673
         },
         {
             "image": "2022040918565268.jpg",
             "num_features": 5061,
-            "wall_time": 1.478304999996908
+            "wall_time": 1.7971893000067212
         },
         {
             "image": "2022040919064833.jpg",
             "num_features": 5119,
-            "wall_time": 1.708846600027755
+            "wall_time": 7.5158206000050995
         },
         {
             "image": "2022040919013170.jpg",
             "num_features": 5204,
-            "wall_time": 2.4347732000169344
+            "wall_time": 2.8543083999829832
         },
         {
             "image": "2022040918545855.jpg",
             "num_features": 5275,
-            "wall_time": 2.209642200032249
+            "wall_time": 3.4884056999871973
         },
         {
             "image": "2022040918555135.jpg",
             "num_features": 5357,
-            "wall_time": 1.7894935999647714
+            "wall_time": 2.442466400010744
         },
         {
             "image": "2022040918542557.jpg",
             "num_features": 5155,
-            "wall_time": 1.6602612999849953
+            "wall_time": 2.290872900019167
         },
         {
             "image": "2022040919001629.jpg",
             "num_features": 5031,
-            "wall_time": 1.8192440000129864
+            "wall_time": 2.1130394999927375
         },
         {
             "image": "2022040918590011.jpg",
             "num_features": 5035,
-            "wall_time": 1.8017829000018537
+            "wall_time": 2.3504218000161927
         },
         {
             "image": "2022040919074834.jpg",
             "num_features": 4750,
-            "wall_time": 1.551621399994474
+            "wall_time": 2.3941753999970388
         },
         {
             "image": "2022040919043251.jpg",
             "num_features": 5102,
-            "wall_time": 1.8959549000137486
+            "wall_time": 2.0757371000072453
         },
         {
             "image": "2022040918560352.jpg",
             "num_features": 5315,
-            "wall_time": 1.7841750999796204
+            "wall_time": 2.170647699997062
         },
         {
             "image": "2022040919015614.jpg",
             "num_features": 5066,
-            "wall_time": 1.6888266000314616
+            "wall_time": 2.3570360000012442
         },
         {
             "image": "2022040919060692.jpg",
             "num_features": 5251,
-            "wall_time": 1.713888099999167
+            "wall_time": 2.3388297999917995
         },
         {
             "image": "2022040919070686.jpg",
             "num_features": 5174,
-            "wall_time": 1.532231499964837
+            "wall_time": 1.802281000011135
         }
     ]
 }

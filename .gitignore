@@ -1,4 +1,10 @@
-/.vscode
+/.vscode/*
 *.JPG
 *.JPG.*
 *.DS_Store
+/__pycache__
+launch.json
+imageData/exif_overrides.json
+imageData/config.yaml
+OpenSfM
+grid_vector.txt

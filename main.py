@@ -14,9 +14,8 @@
 #
 ###################################################################################################
 import argparse
-import os
-from pathlib import Path
 
+from pathlib import Path
 from image_parsing import image_parsing
 from image_processing import process_images
 from slope_model_generation import generate_slope_map
