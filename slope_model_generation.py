@@ -34,9 +34,7 @@ GRID_SIZE_X = 4
 GRID_SIZE_Y = 4
 
 GRADIENT_FILE = "grid_vector.txt"
-PLY_FILE_PATH = Path("green", "undistorted", "depthmaps", "steady_y_increasing-flat.ply")
-#PLY_FILE_PATH = Path("green", "undistorted", "depthmaps", "flat.ply")
-#PLY_FILE_PATH = Path("green", "undistorted", "depthmaps", "corners.ply")
+PLY_FILE_PATH = Path("green", "undistorted", "depthmaps", "merged.ply")
 
 ###################################################################################################
 #
