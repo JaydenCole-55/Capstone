@@ -25,10 +25,10 @@ from pathlib import Path
 X = 0
 Y = 1
 Z = 2
-GRID_SIZE_X = 14
-GRID_SIZE_Y = 10
+GRID_SIZE_X = 12
+GRID_SIZE_Y = 13
 POS_DIR = 'U'
-DATA_POINTS = 81
+DATA_POINTS = 112
 
 ###################################################################################################
 #
@@ -47,7 +47,7 @@ class Data_Element(object):
         # Read file line in
         self.data_point = int(values[0])
         self.EW_mag = float(values[1])
-        self.EW_dir = 1 if values[2] == POS_DIR else -1
+        self.EW_dir = -1 if values[2] == POS_DIR else 1
         self.NS_mag = float(values[3])
         self.NS_dir = 1 if values[4] == POS_DIR else -1
         self.col = int(values[5])
@@ -126,128 +126,93 @@ def create_green_grid(data_points):
     data_point = 0
 
     # Add column 0 points 
-    green_grid[5][0] = data_points[data_point].compute_vector_mag()
-    green_dir_grid[5][0] = data_points[data_point].compute_vector_dir()
-    green_point_grid[5][0] = data_points[data_point]
+    green_grid[11][0] = data_points[data_point].compute_vector_mag()
+    green_dir_grid[11][0] = data_points[data_point].compute_vector_dir()
+    green_point_grid[11][0] = data_points[data_point]
     data_point+=1
 
     # Add column 1 points 
-    for i in range(6):
-        green_grid[i+2][1] = data_points[data_point + i].compute_vector_mag()
-        green_dir_grid[i+2][1] = data_points[data_point + i].compute_vector_dir()
-        green_point_grid[i+2][1] = data_points[data_point + i]
-    data_point+=6
-
-    # Add column 2 points 
-    for i in range(9):
-        green_grid[i][2] = data_points[data_point + i].compute_vector_mag()
-        green_dir_grid[i][2] = data_points[data_point + i].compute_vector_dir()
-        green_point_grid[i][2] = data_points[data_point + i]
-    data_point+=9
-
-    # Add column 3 points 
-    for i in range(9):
-        green_grid[i][3] = data_points[data_point + i].compute_vector_mag()
-        green_dir_grid[i][3] = data_points[data_point + i].compute_vector_dir()
-        green_point_grid[i][3] = data_points[data_point + i]
-    data_point+=9
-
-    # Add column 4 points 
-    for i in range(9):
-        green_grid[i][4] = data_points[data_point + i].compute_vector_mag()
-        green_dir_grid[i][4] = data_points[data_point + i].compute_vector_dir()
-        green_point_grid[i][4] = data_points[data_point + i]
-    data_point+=9
-
-    # Add column 5 points 
-    for i in range(9):
-        green_grid[i][5] = data_points[data_point + i].compute_vector_mag()
-        green_dir_grid[i][5] = data_points[data_point + i].compute_vector_dir()
-        green_point_grid[i][5] = data_points[data_point + i]
-    data_point+=9
-
-    # Add column 6 points -- done manually due to weird skip 
-    green_grid[1][6] = data_points[data_point + 0].compute_vector_mag()
-    green_grid[2][6] = data_points[data_point + 1].compute_vector_mag()
-    # Skip data point 3
-    green_grid[4][6] = data_points[data_point + 2].compute_vector_mag()
-    green_grid[5][6] = data_points[data_point + 3].compute_vector_mag()
-    green_grid[6][6] = data_points[data_point + 4].compute_vector_mag()
-    green_grid[7][6] = data_points[data_point + 5].compute_vector_mag()
-    green_grid[8][6] = data_points[data_point + 6].compute_vector_mag()
-
-    # Direction
-    green_dir_grid[1][6] = data_points[data_point + 0].compute_vector_dir()
-    green_dir_grid[2][6] = data_points[data_point + 1].compute_vector_dir()
-    # Skip data point 3
-    green_dir_grid[4][6] = data_points[data_point + 2].compute_vector_dir()
-    green_dir_grid[5][6] = data_points[data_point + 3].compute_vector_dir()
-    green_dir_grid[6][6] = data_points[data_point + 4].compute_vector_dir()
-    green_dir_grid[7][6] = data_points[data_point + 5].compute_vector_dir()
-    green_dir_grid[8][6] = data_points[data_point + 6].compute_vector_dir()
-
-    # Data Points
-    green_point_grid[1][6] = data_points[data_point + 0]
-    green_point_grid[2][6] = data_points[data_point + 1]
-    # Skip data point 3
-    green_point_grid[4][6] = data_points[data_point + 2]
-    green_point_grid[5][6] = data_points[data_point + 3]
-    green_point_grid[6][6] = data_points[data_point + 4]
-    green_point_grid[7][6] = data_points[data_point + 5]
-    green_point_grid[8][6] = data_points[data_point + 6]
-    data_point+=7
-
-    # Add column 7 points 
-    for i in range(6):
-        green_grid[i+2][7] = data_points[data_point + i].compute_vector_mag()
-        green_dir_grid[i+2][7] = data_points[data_point + i].compute_vector_dir()
-        green_point_grid[i+2][7] = data_points[data_point + i]
-    data_point+=6
-
-    # Add column 8 points 
-    for i in range(5):
-        green_grid[i+4][8] = data_points[data_point + i].compute_vector_mag()
-        green_dir_grid[i+4][8] = data_points[data_point + i].compute_vector_dir()
-        green_point_grid[i+4][8] = data_points[data_point + i]
-    data_point+=5
-
-    # Add column 9 points 
-    for i in range(5):
-        green_grid[i+4][9] = data_points[data_point + i].compute_vector_mag()
-        green_dir_grid[i+4][9] = data_points[data_point + i].compute_vector_dir()
-        green_point_grid[i+4][9] = data_points[data_point + i]
-    data_point+=5
-
-    # Add column 10 points 
-    for i in range(5):
-        green_grid[i+5][10] = data_points[data_point + i].compute_vector_mag()
-        green_dir_grid[i+5][10] = data_points[data_point + i].compute_vector_dir()
-        green_point_grid[i+5][10] = data_points[data_point + i]
-    data_point+=5
-
-    # Add column 11 points 
-    for i in range(5):
-        green_grid[i+5][11] = data_points[data_point + i].compute_vector_mag()
-        green_dir_grid[i+5][11] = data_points[data_point + i].compute_vector_dir()
-        green_point_grid[i+5][11] = data_points[data_point + i]
-    data_point+=5
-
-    # Add column 12 points 
     for i in range(4):
-        green_grid[i+6][12] = data_points[data_point + i].compute_vector_mag()
-        green_dir_grid[i+6][12] = data_points[data_point + i].compute_vector_dir()
-        green_point_grid[i+6][12] = data_points[data_point + i]
+        green_grid[i+9][1] = data_points[data_point + i].compute_vector_mag()
+        green_dir_grid[i+9][1] = data_points[data_point + i].compute_vector_dir()
+        green_point_grid[i+9][1] = data_points[data_point + i]
     data_point+=4
 
-    # Add column 13 points 
-    green_grid[7][13] = data_points[data_point].compute_vector_mag()
-    green_dir_grid[7][13] = data_points[data_point].compute_vector_dir()
-    green_point_grid[7][13] = data_points[data_point]
+    # Add column 2 points 
+    for i in range(10):
+        green_grid[i+3][2] = data_points[data_point + i].compute_vector_mag()
+        green_dir_grid[i+3][2] = data_points[data_point + i].compute_vector_dir()
+        green_point_grid[i+3][2] = data_points[data_point + i]
+    data_point+=10
 
-    #print_grid(green_grid, '{:6.2f}')
-    #print()
-    #print()
-    #print_grid(green_dir_grid, '{:5.2f}  ')
+    # Add column 3 points 
+    for i in range(10):
+        green_grid[i+3][3] = data_points[data_point + i].compute_vector_mag()
+        green_dir_grid[i+3][3] = data_points[data_point + i].compute_vector_dir()
+        green_point_grid[i+3][3] = data_points[data_point + i]
+    data_point+=10
+
+    # Add column 4 points 
+    for i in range(10):
+        green_grid[i+3][4] = data_points[data_point + i].compute_vector_mag()
+        green_dir_grid[i+3][4] = data_points[data_point + i].compute_vector_dir()
+        green_point_grid[i+3][4] = data_points[data_point + i]
+    data_point+=10
+
+    # Add column 5 points 
+    for i in range(11):
+        green_grid[i+2][5] = data_points[data_point + i].compute_vector_mag()
+        green_dir_grid[i+2][5] = data_points[data_point + i].compute_vector_dir()
+        green_point_grid[i+2][5] = data_points[data_point + i]
+    data_point+=11
+
+    # Add column 6 points 
+    for i in range(12):
+        green_grid[i+1][6] = data_points[data_point + i].compute_vector_mag()
+        green_dir_grid[i+1][6] = data_points[data_point + i].compute_vector_dir()
+        green_point_grid[i+1][6] = data_points[data_point + i]
+    data_point+=12
+    
+
+    # Add column 7 points 
+    for i in range(12):
+        green_grid[i+1][7] = data_points[data_point + i].compute_vector_mag()
+        green_dir_grid[i+1][7] = data_points[data_point + i].compute_vector_dir()
+        green_point_grid[i+1][7] = data_points[data_point + i]
+    data_point+=12
+
+    # Add column 8 points 
+    for i in range(13):
+        green_grid[i][8] = data_points[data_point + i].compute_vector_mag()
+        green_dir_grid[i][8] = data_points[data_point + i].compute_vector_dir()
+        green_point_grid[i][8] = data_points[data_point + i]
+    data_point+=13
+
+    # Add column 9 points 
+    for i in range(13):
+        green_grid[i][9] = data_points[data_point + i].compute_vector_mag()
+        green_dir_grid[i][9] = data_points[data_point + i].compute_vector_dir()
+        green_point_grid[i][9] = data_points[data_point + i]
+    data_point+=13
+
+    # Add column 10 points 
+    for i in range(12):
+        green_grid[i][10] = data_points[data_point + i].compute_vector_mag()
+        green_dir_grid[i][10] = data_points[data_point + i].compute_vector_dir()
+        green_point_grid[i][10] = data_points[data_point + i]
+    data_point+=12
+
+    # Add column 11 points 
+    for i in range(4):
+        green_grid[i+1][11] = data_points[data_point + i].compute_vector_mag()
+        green_dir_grid[i+1][11] = data_points[data_point + i].compute_vector_dir()
+        green_point_grid[i+1][11] = data_points[data_point + i]
+    data_point+=4
+
+    print_grid(green_grid, '{:6.2f}')
+    print()
+    print()
+    print_grid(green_dir_grid, '{:5.2f}  ')
 
     return [green_grid, green_dir_grid, green_point_grid]
 
@@ -361,7 +326,7 @@ def generate_slope_map(csv_file):
 if __name__ == '__main__':
     # Read in arguments
     parser = argparse.ArgumentParser(description='Find green map from ground truth data, formatted in csv file')
-    parser.add_argument('csv_file', metavar='file', type=str, default=Path('GroundTruth', 'WWP_GreenTruth.csv'), help='Path to csv file')
+    parser.add_argument('csv_file', metavar='file', type=str, default=Path('GroundTruth', 'MG1_GreenTruth.csv'), help='Path to csv file')
 
     args = parser.parse_args()
 
