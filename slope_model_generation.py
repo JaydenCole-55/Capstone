@@ -20,7 +20,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from pathlib import Path
-from sklearn import linear_model
 
 ###################################################################################################
 #
@@ -30,11 +29,11 @@ from sklearn import linear_model
 X = 0
 Y = 1
 Z = 2
-GRID_SIZE_X = 4
-GRID_SIZE_Y = 4
+GRID_SIZE_X = 14
+GRID_SIZE_Y = 14
 
 GRADIENT_FILE = "grid_vector.txt"
-PLY_FILE_PATH = Path("green", "undistorted", "depthmaps", "merged.ply")
+PLY_FILE_PATH = Path("merged.ply")
 
 ###################################################################################################
 #
@@ -339,7 +338,7 @@ def plot_green(data):
                 xRow.append(0)
                 yRow.append(0)
             else:
-                magArr.append(abs(data[i][j][Z])*100)
+                magArr.append(abs(data[i][j][Z])*10)
                 xRow.append(data[i][j][X])
                 yRow.append(-1*data[i][j][Y]) # Y positive axis is downward, had to flip to get arrows in correct direction
         mag.append(magArr)

@@ -312,23 +312,48 @@ def plot_green(slope_mag, slope_dir, data):
     yy = []
     mag = []
 
+    file_handle = open("grid_vector_GT.txt", "w")
+
+
+    
+
     # Map gradients to X and Y slopes
     for i in range(GRID_SIZE_Y):
         magArr = []
         xRow = []
         yRow = []
         for j in range(GRID_SIZE_X):
+
+            # Write to file
+            if not (i == 0 and j == 0):
+                file_handle.write('\n')
+
+            
+
             if (data[i][j] == 0):
                 magArr.append(0)
                 xRow.append(0)
                 yRow.append(0)
+
+                #Print to file
+                file_handle.write(str(0) + ',')
+                file_handle.write(str(0) + ',')
+                file_handle.write(str(0))
             else:
                 magArr.append(data[i][j].compute_vector_mag())
                 xRow.append(data[i][j].get_EW_vect())
                 yRow.append(data[i][j].get_NS_vect())
+
+                #Print to file
+                file_handle.write(str(data[i][j].get_EW_vect()) + ',')
+                file_handle.write(str(data[i][j].get_NS_vect()) + ',')
+                file_handle.write(str(data[i][j].compute_vector_mag()))
         mag.append(magArr)
         xx.append(xRow)
         yy.append(yRow)
+
+    # Close file
+    file_handle.close()
 
     # Normalize arrows for quiver plot
     [qX, qY] = normalize(xx, yy)
