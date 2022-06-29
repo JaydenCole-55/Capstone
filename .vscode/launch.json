@@ -5,30 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Run Pipeline - 5m Over Green - GPS",
-            "type": "python",
-            "request": "launch",
-            "program": "main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "./DataTest/PICS for GPS-20220412T022518Z-001",
-            ],
-            "justMyCode": true
-        },
-        {
-            "name": "Run Pipeline - Test - GPS",
-            "type": "python",
-            "request": "launch",
-            "program": "main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "./DataTest/GPS_data_test/input/images/",
-                "./DataTest/GPS_data_test/input/GPS_data.csv",
-                "./DataTest/GPS_data_test/output/"
-            ],
-            "justMyCode": true
-        },
-        {
             "name": "SMG - Store Gradients",
             "type": "python",
             "request": "launch",
@@ -51,35 +27,32 @@
             ]
         },
         {
-            "name": "Default Image Processing",
-            "type": "python",
-            "request": "launch",
-            "program": "image_processing.py",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Default Image Parsing",
-            "type": "python",
-            "request": "launch",
-            "program": "image_parsing.py",
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Copy to Docker",
-            "type": "python",
-            "request": "launch",
-            "program": "copy_file_to_docker.py",
-            "console": "integratedTerminal"
-        },
-                {
             "name": "SMG - Test slope making",
             "type": "python",
             "request": "launch",
             "program": "slope_model_generation.py",
             "console": "integratedTerminal",
             "args": [
-                "DataTest/slope_model_generation_tests/",
+                ".",
                 "--store_gradients"
+            ]
+        },
+        {
+            "name": "SMGT - Visualization",
+            "type": "python",
+            "request": "launch",
+            "program": "slope_model_generation_tests.py",
+            "console": "integratedTerminal",
+        },
+        {
+            "name": "Add GPS Data to images",
+            "type": "python",
+            "request": "launch",
+            "program": "add_GPS_to_images.py",
+            "console": "integratedTerminal",
+            "args":[
+                "--data_folder",
+                "Data/MeadowGardens_hole1_drone/inputs"
             ]
         }
     ]

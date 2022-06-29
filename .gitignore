@@ -11,3 +11,5 @@ grid_vector.txt
 /DataTest/*
 .vscode/launch.json
 *.gz
+/Data/Usmans_data/*
+/Data/WestwoodPlateau_hole0/*

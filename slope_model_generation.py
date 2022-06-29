@@ -20,7 +20,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from pathlib import Path
-from sklearn import linear_model
 
 ###################################################################################################
 #
@@ -30,11 +29,10 @@ from sklearn import linear_model
 X = 0
 Y = 1
 Z = 2
-GRID_SIZE_X = 4
-GRID_SIZE_Y = 4
+GRID_SIZE_X = 20
+GRID_SIZE_Y = 20
 
 GRADIENT_FILE = "grid_vector.txt"
-PLY_FILE_PATH = Path("green", "undistorted", "depthmaps", "merged.ply")
 
 ###################################################################################################
 #
@@ -135,7 +133,7 @@ def calculate_gradient(indicies, s_data, grid_location):
         zs[counter] = s_data.z[index]
         counter+=1
 
-    # Fit a 2D plane to the data - Old
+    # Fit a 2D plane to the data
     tmp_A = []
     tmp_b = []
     for i in range(len(indicies)):
@@ -276,7 +274,7 @@ def print_grid(array_2d, formatting):
     #
     ######################################
     for row in array_2d:
-        print_row = "";
+        print_row = ""
         for val in row:
             print_row += formatting.format(val[Z])
         print(print_row)
@@ -370,7 +368,7 @@ def generate_slope_map(output_folder, store_gradients, read_gradients):
     # Calls all the functions needed to create greens map 
     #
     ######################################
-    ply_file = Path(output_folder, PLY_FILE_PATH)
+    ply_file = Path(output_folder)
 
     gradient_grid = create_gradient_grid(ply_file, store_gradients, read_gradients)
 
@@ -383,7 +381,7 @@ def generate_slope_map(output_folder, store_gradients, read_gradients):
 if __name__ == '__main__':
     # Read in arguments
     parser = argparse.ArgumentParser(description='Find slopes from a ply file')
-    parser.add_argument('output_folder', metavar='file', type=str, default=Path('DataTest', 'PICS for GPS-20220412T022518Z-001', 'output'), help='Output folder path')
+    parser.add_argument('data_folder', metavar='file', type=str, default=Path(), help='Output folder path')
     parser.add_argument('--store_gradients', action='store_true', help='Store calculated gradients to memory')
     parser.add_argument('--read_gradients', action='store_true', help='Get gradients from memory')
 
