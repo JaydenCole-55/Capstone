@@ -12,13 +12,12 @@
 #   1. Will vary by the functionality used
 #
 ###################################################################################################
-import math
 import argparse
 import numpy as np
 
 from tqdm import tqdm
 from pathlib import Path
-from slope_model_generation import read_ply_file
+from slope_model_generation import read_ply_file, create_gradient_grid
 
 
 ###################################################################################################

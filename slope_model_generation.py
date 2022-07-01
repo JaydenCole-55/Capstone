@@ -20,6 +20,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from pathlib import Path
+from sklearn import linear_model
 
 ###################################################################################################
 #
@@ -29,10 +30,15 @@ from pathlib import Path
 X = 0
 Y = 1
 Z = 2
-GRID_SIZE_X = 20
-GRID_SIZE_Y = 20
+
+GRID_SIZE_X = 4
+GRID_SIZE_Y = 4
 
 GRADIENT_FILE = "grid_vector.txt"
+PLY_FILE = "steady_x_increasing.ply"
+
+X_UNIT_VECTOR = np.array([1, 0, 0])
+Y_UNIT_VECTOR = np.array([0, 1, 0])
 
 ###################################################################################################
 #
@@ -104,7 +110,7 @@ def read_ply_file(ply_file):
     return s_data
 
 
-def calculate_gradient(indicies, s_data, grid_location):
+def calculate_gradient(indicies, s_data):
     #######################################
     #
     # Calculates the slope of the given indicies from the most top left corner point
@@ -113,12 +119,6 @@ def calculate_gradient(indicies, s_data, grid_location):
     # Returns: Vector sum (tuple as (x, y, z))
     #
     ######################################
-
-    # Determine location of grid area
-    x_min = grid_location[0]
-    y_min = grid_location[1]
-    x_max = grid_location[2]
-    y_max = grid_location[3]
 
     # Preallocate memory
     xs = np.zeros(len(indicies))
@@ -133,60 +133,51 @@ def calculate_gradient(indicies, s_data, grid_location):
         zs[counter] = s_data.z[index]
         counter+=1
 
+    xs = np.transpose(np.array(xs))
+    ys = np.transpose(np.array(ys))
+
     # Fit a 2D plane to the data
-    tmp_A = []
-    tmp_b = []
-    for i in range(len(indicies)):
-        tmp_A.append([xs[i], ys[i], 1])
-        tmp_b.append(zs[i])
-    b = np.matrix(tmp_b).T
-    A = np.matrix(tmp_A)
-    try:
-        fit = (A.T * A).I * A.T * b
-    except Exception as e:
-        # TODO: sometimes there are multiples of the same point in the ply file,
-        # for now, return a null gradient - Preferably ply file creation would check for no double
-        # points
-        print("Cannot compute a gradient in a grid section due to multiples of the same point")
+    XY_data = np.zeros([len(xs), 2])
+    for i in range(len(xs)):
+        XY_data[i][0] = xs[i]
+        XY_data[i][1] = ys[i]
 
-        return (0, 0, 0)
+    Z_data = zs
 
-    left_top     = [x_min, y_min, float(np.squeeze(np.array(x_min * fit[0] + y_min * fit[1] + fit[2])))]
-    left_bottom  = [x_min, y_max, float(np.squeeze(np.array(x_min * fit[0] + y_max * fit[1] + fit[2])))]
-    right_top    = [x_max, y_min, float(np.squeeze(np.array(x_max * fit[0] + y_min * fit[1] + fit[2])))]
-    right_bottom = [x_max, y_max, float(np.squeeze(np.array(x_max * fit[0] + y_max * fit[1] + fit[2])))]
+    # Fit plane to data
+    reg = linear_model.LinearRegression().fit(XY_data, Z_data)
 
-    # Eliminate floating point error through rounding
-    left_bottom[2]  = round(left_bottom[2], 8)
-    left_top[2]     = round(left_top[2], 8)
-    right_bottom[2] = round(right_bottom[2], 8)
-    right_top[2]    = round(right_top[2], 8)
+    # Plane of best fit Ax + By + C = z
+    A = reg.coef_[0]
+    B = reg.coef_[1]
+    C = reg.intercept_
 
-    if left_top[2] - right_top[2] == 0 and left_top[2] - left_bottom[2] == 0:
-        # Plane is flat, return no gradient vector
-        return (0, 0, 0)
-    elif left_top[2] - left_bottom[2] == 0:
-        # Plane is flat in y direction, return x direction gradient
-        gradient = np.subtract(left_top, right_top)
-    elif left_top[2] - right_top[2] == 0:
-        # Plane is flat in x direction, return y direction gradient
-        gradient = np.subtract(left_top, left_bottom)
-    elif abs(left_top[2] - right_bottom[2]) > abs(left_bottom[2] - right_top[2]):
-        # Diagonal gradient (min_x, min_y <--> max_x, max_y)
-        gradient = np.subtract(left_top, right_bottom)
-    elif abs(left_bottom[2] - right_top[2]) > abs(left_top[2] - right_bottom[2]):
-        # Diagonal gradient (min_x, max_y <--> min_x, max_y)
-        gradient = np.subtract(left_bottom, right_top)
-    else:
-        # Should never end up here, print error for debugging, return (0, 0, 0)
-        print("Calculated gradient did not fall into the 5 anticipate categories of gradient. Debug here")
-        return (0, 0, 0)
+    # Get normal to plane through cross product of two vectors in plane
+    z_of_xy_00 = A*0 + B*0 + C
+    z_of_xy_10 = A*1 + B*0 + C
+    z_of_xy_01 = A*0 + B*1 + C
 
-    # Ensure the gradient points down the slope
-    if gradient[2] > 0:
-        return -1*gradient
-    else:
-        return gradient
+    p00z = np.array([0, 0, z_of_xy_00])
+    p10z = np.array([1, 0, z_of_xy_10])
+    p01z = np.array([0, 1, z_of_xy_01])
+
+    v1 = p10z - p00z
+    v2 = p01z - p00z
+
+    pobf_normal_vector = np.cross(v1, v2)
+
+    # Get 2 points on pobf that are x, y of the normal vector apart
+    z_of_normal_xy =  A*pobf_normal_vector[0] + B*pobf_normal_vector[1] + C
+    pxyz = np.array([pobf_normal_vector[0], pobf_normal_vector[1], z_of_normal_xy])
+
+    # The gradient is the vector between this pxyz and p00z
+    gradient = p00z - pxyz
+
+    # Normalize the gradient wrt its x and y components (as long as it is not 0)
+    if not np.array_equal(gradient, np.zeros(3)):
+        gradient = gradient / np.sqrt((gradient[X])**2 + (gradient[Y])**2)
+
+    return -1 * gradient
 
 
 def create_gradient_grid(ply_file, store_gradients, read_gradients):
@@ -247,7 +238,7 @@ def create_gradient_grid(ply_file, store_gradients, read_gradients):
                     continue
                 else:
                     # Find a vector that averages the slopes of the grid area points
-                    grid_vector[i][j] = calculate_gradient(indicies, data, (x_start, y_start, x_finish, y_finish))
+                    grid_vector[i][j] = calculate_gradient(indicies, data)
 
         if store_gradients:
             # Write the gradients to a text file
@@ -267,49 +258,6 @@ def create_gradient_grid(ply_file, store_gradients, read_gradients):
     return grid_vector
 
 
-def print_grid(array_2d, formatting):
-    #######################################
-    #
-    # Prints a 2D array as a grid
-    #
-    ######################################
-    for row in array_2d:
-        print_row = ""
-        for val in row:
-            print_row += formatting.format(val[Z])
-        print(print_row)
-
-    return
-
-
-def normalize(X, Y):
-    #######################################
-    #
-    # Normalize the X and Y vectors for quiver plot
-    #
-    ######################################
-    qX = []
-    qY = []
-
-    for i in range(GRID_SIZE_Y):
-        qx = []
-        qy = []
-        for j in range(GRID_SIZE_X):
-            xVal = X[i][j]
-            yVal = Y[i][j]
-            if (xVal == 0 and yVal == 0):
-                qx.append(0)
-                qy.append(0)
-            else:
-                qx.append(xVal / np.sqrt(xVal**2 + yVal**2))
-                qy.append(yVal / np.sqrt(xVal**2 + yVal**2))
-
-        qX.append(qx)
-        qY.append(qy)
-
-    return [qX, qY]
-
-
 def plot_green(data):
     #######################################
     #
@@ -327,28 +275,20 @@ def plot_green(data):
     mag = []
 
     # Map gradients to X and Y slopes
-    for i in range(GRID_SIZE_Y):
+    for i in range(GRID_SIZE_Y-1, -1, -1):
         magArr = []
         xRow = []
         yRow = []
         for j in range(GRID_SIZE_X):
-            if (data[i][j][Z] == 0):
-                magArr.append(0)
-                xRow.append(0)
-                yRow.append(0)
-            else:
-                magArr.append(abs(data[i][j][Z])*100)
-                xRow.append(data[i][j][X])
-                yRow.append(-1*data[i][j][Y]) # Y positive axis is downward, had to flip to get arrows in correct direction
+            magArr.append(abs(data[i][j][Z]) * 100) # Convert rise/run to degrees (Eg. 0.01 rise/1 run = 1 degree)
+            xRow.append(data[i][j][X])
+            yRow.append(-1*data[i][j][Y]) # Y positive axis is downward, flip to get arrows in correct direction
         mag.append(magArr)
         xx.append(xRow)
         yy.append(yRow)
 
-    # Normalize arrows for quiver plot
-    #[qX, qY] = normalize(xx, yy)
-
     # Plot
-    plt.quiver(xx, yy, scale=7, scale_units="inches", pivot="mid")
+    plt.quiver(xx, yy, scale=2, scale_units="xy", pivot="mid")
     plt.imshow(mag, cmap="jet", interpolation="hanning")
     plt.clim(0.0, 5.0)
     plt.colorbar()
@@ -368,7 +308,7 @@ def generate_slope_map(output_folder, store_gradients, read_gradients):
     # Calls all the functions needed to create greens map 
     #
     ######################################
-    ply_file = Path(output_folder)
+    ply_file = Path(output_folder, PLY_FILE)
 
     gradient_grid = create_gradient_grid(ply_file, store_gradients, read_gradients)
 
@@ -381,10 +321,10 @@ def generate_slope_map(output_folder, store_gradients, read_gradients):
 if __name__ == '__main__':
     # Read in arguments
     parser = argparse.ArgumentParser(description='Find slopes from a ply file')
-    parser.add_argument('data_folder', metavar='file', type=str, default=Path(), help='Output folder path')
+    parser.add_argument('data_folder', metavar='file', type=str, default=Path(), help='Data folder path')
     parser.add_argument('--store_gradients', action='store_true', help='Store calculated gradients to memory')
     parser.add_argument('--read_gradients', action='store_true', help='Get gradients from memory')
 
     args = parser.parse_args()
 
-    generate_slope_map(args.output_folder, args.store_gradients, args.read_gradients)
+    generate_slope_map(args.data_folder, args.store_gradients, args.read_gradients)
